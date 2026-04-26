@@ -25,19 +25,19 @@
                 <tr class="hover:bg-gray-50/50 transition">
                     <td class="py-4 px-8">
                         <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center border border-gray-200">
-                            {% if cat[2] and (cat[2].endswith('.png') or cat[2].endswith('.svg') or cat[2].endswith('.jpg')) %}
-                                <img src="/static/category_icons/{{ cat[2] }}" class="w-8 h-8 object-contain">
+                            {% if cat.icon and (cat.icon.endswith('.png') or cat.icon.endswith('.svg') or cat.icon.endswith('.jpg') or cat.icon.endswith('.webp')) %}
+                                <img src="/static/category_icons/{{ cat.icon }}" class="w-8 h-8 object-contain">
                             {% else %}
-                                <i class="fas {{ cat[2] if cat[2] else 'fa-folder' }} text-gray-400"></i>
+                                <i class="fas {{ cat.icon if cat.icon else 'fa-folder' }} text-gray-400"></i>
                             {% endif %}
                         </div>
                     </td>
-                    <td class="py-4 px-8 font-bold text-gray-900 text-lg">{{ cat[1] }}</td>
+                    <td class="py-4 px-8 font-bold text-gray-900 text-lg">{{ cat.name }}</td>
                     <td class="py-4 px-8 text-right space-x-2">
-                        <button onclick="openCategoryModal('{{ cat[0] }}', '{{ cat[1] }}', '{{ cat[2] }}')" class="text-blue-500 hover:bg-blue-50 p-3 rounded-xl transition">
+                        <button onclick="openCategoryModal('{{ cat.id }}', '{{ cat.name }}', '{{ cat.icon }}')" class="text-blue-500 hover:bg-blue-50 p-3 rounded-xl transition">
                             <i class="fas fa-pen"></i>
                         </button>
-                        <button onclick="deleteCategory('{{ cat[0] }}')" class="text-red-400 hover:bg-red-50 p-3 rounded-xl transition">
+                        <button onclick="deleteCategory('{{ cat.id }}')" class="text-red-400 hover:bg-red-50 p-3 rounded-xl transition">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </td>
@@ -81,7 +81,6 @@
     let localIcons = [];
 
     document.addEventListener('DOMContentLoaded', function() {
-        // Загружаем список файлов из твоей папки при старте страницы
         fetch('/api/get_local_icons')
             .then(r => r.json())
             .then(data => {
@@ -116,10 +115,10 @@
         grid.innerHTML = localIcons.map(fileName => {
             const isSelected = fileName === currentIcon;
             return `
-                <div onclick="selectIcon('${fileName}')" id="icon-${fileName}" 
+                <div onclick="selectIcon('${fileName}')" id="icon-${fileName.replace(/\\./g, '-')}" 
                      class="icon-item cursor-pointer p-2 border-2 ${isSelected ? 'border-blue-500 bg-white' : 'border-transparent'} hover:border-blue-200 rounded-xl transition flex flex-col items-center">
                     <img src="/static/category_icons/${fileName}" class="w-8 h-8 object-contain">
-                    <div class="text-[8px] mt-1 text-gray-400 truncate w-full text-center">${fileName}</div>
+                    <div class="text-[8px] mt-1 text-gray-400 truncate w-full text-center" title="${fileName}">${fileName}</div>
                 </div>
             `;
         }).join('');
@@ -127,9 +126,8 @@
 
     function selectIcon(fileName) {
         document.getElementById('selectedIcon').value = fileName;
-        // Снимаем выделение со всех и выделяем текущий
         document.querySelectorAll('.icon-item').forEach(el => el.classList.replace('border-blue-500', 'border-transparent'));
-        document.getElementById('icon-' + fileName).classList.replace('border-transparent', 'border-blue-500');
+        document.getElementById('icon-' + fileName.replace(/\\./g, '-')).classList.replace('border-transparent', 'border-blue-500');
     }
 
     function saveCategory() {
@@ -152,12 +150,11 @@
         }).then(() => window.location.reload());
     }
 
+    // ИСПРАВЛЕНО: Теперь ID правильно подставляется в ссылку для удаления
     function deleteCategory(id) {
         if (confirm('Удалить эту категорию? Товары в ней могут остаться без привязки.')) {
-            fetch('/api/delete_category', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id })
+            fetch('/api/delete_category/' + id, {
+                method: 'POST'
             }).then(() => window.location.reload());
         }
     }
