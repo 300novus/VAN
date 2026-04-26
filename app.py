@@ -252,7 +252,6 @@ def create_proposal():
             return redirect(url_for('proposals_list'))
         clients = c.execute("SELECT id, name FROM clients ORDER BY name").fetchall()
     return render_template('create_proposal.html', clients=clients, json=json)
-
 @app.route('/edit_proposal/<prop_id>', methods=['GET', 'POST'])
 def edit_proposal(prop_id):
     with sqlite3.connect(DB_NAME) as conn:
@@ -264,6 +263,10 @@ def edit_proposal(prop_id):
             c.execute("DELETE FROM proposal_blocks WHERE proposal_id=?", (prop_id,))
             
             block_ids = request.form.getlist('block_ids[]')
+            
+            # ДОБАВЛЕНО: Создаем счетчик новой суммы
+            total = 0 
+            
             for order, bid in enumerate(block_ids):
                 b_type = request.form.get(f'b_type_{bid}')
                 title = request.form.get(f'title_{bid}', '')
@@ -272,6 +275,10 @@ def edit_proposal(prop_id):
                 price = request.form.get(f'price_{bid}', 0)
                 unit = request.form.get(f'unit_{bid}', 'шт.')
                 cost = request.form.get(f'cost_{bid}', 0)
+                
+                # ДОБАВЛЕНО: Если это товар, плюсуем к итоговой сумме
+                if b_type == 'product':
+                    total += float(qty) * float(price)
                 
                 # Сохраняем картинки
                 def save_img(idx):
@@ -296,13 +303,20 @@ def edit_proposal(prop_id):
                     man_qtys = request.form.getlist(f'man_qty_{bid}[]')
                     man_prices = request.form.getlist(f'man_price_{bid}[]')
                     rows = [{'title': man_titles[i], 'unit': man_units[i], 'qty': man_qtys[i], 'price': man_prices[i]} for i in range(len(man_titles))]
+                    
+                    # ДОБАВЛЕНО: Считаем сумму для таблицы-спецификации
+                    for i in range(len(man_titles)):
+                        total += float(man_qtys[i]) * float(man_prices[i])
+                        
                     items_json = json.dumps(rows, ensure_ascii=False)
                 
-                # ИСПРАВЛЕНО: Теперь сохраняем ВСЕ данные (title, text, price и т.д.)
                 c.execute("""INSERT INTO proposal_blocks 
                     (proposal_id, block_type, sort_order, title, text_content, qty, price, unit, img1, img2, img3, items_json, cost) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
                     (prop_id, b_type, order, title, text_content, qty, price, unit, i1, i2, i3, items_json, cost))
+            
+            # ДОБАВЛЕНО: Сохраняем новую посчитанную сумму в базу
+            c.execute("UPDATE proposals SET total=? WHERE id=?", (total, prop_id))
             
             conn.commit()
             return redirect(url_for('proposals_list'))
