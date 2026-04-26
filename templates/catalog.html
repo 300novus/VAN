@@ -78,12 +78,20 @@
             <div><label class="block text-xs font-bold text-gray-500 mb-1">Описание (для КП)</label><textarea name="description" rows="2" class="w-full bg-gray-50 border p-2 rounded-xl"></textarea></div>
             <div class="grid grid-cols-3 gap-4">
                 <div><label class="block text-xs font-bold text-gray-500 mb-1">Ед. изм.</label><input type="text" name="unit" value="шт." class="w-full bg-gray-50 border p-2 rounded-xl text-center"></div>
-                <div><label class="block text-xs font-bold text-gray-500 mb-1">Себестоимость</label><input type="number" step="0.01" name="cost" id="c_cost_add" readonly class="w-full bg-gray-100 border p-2 rounded-xl text-right font-bold text-red-500" value="0"></div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Себестоимость</label>
+                    <input type="number" step="0.01" name="cost" id="c_cost_add" readonly class="w-full bg-gray-100 border p-2 rounded-xl text-right font-bold text-red-500 transition-colors" value="0">
+                </div>
                 <div><label class="block text-xs font-bold text-gray-500 mb-1">Цена продажи</label><input type="number" step="0.01" name="retail_price" required class="w-full bg-gray-50 border p-2 rounded-xl text-right font-bold text-blue-600"></div>
             </div>
 
             <div class="border p-4 rounded-xl mt-4">
-                <label class="block text-xs font-black text-blue-600 uppercase mb-2">Расчет себестоимости (Спецификация)</label>
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-xs font-black text-blue-600 uppercase">Спецификация</label>
+                    <label class="flex items-center text-xs text-gray-500 cursor-pointer font-bold select-none">
+                        <input type="checkbox" id="autoCostAdd" checked onchange="toggleAutoCost('add')" class="mr-2 accent-blue-500 w-4 h-4"> Авто-расчет
+                    </label>
+                </div>
                 <div id="bom_rows_add" class="space-y-2"></div>
                 <button type="button" onclick="addBomRow('add')" class="text-xs font-bold text-blue-500 hover:underline mt-2"><i class="fas fa-plus"></i> Добавить материал/работу</button>
             </div>
@@ -121,12 +129,20 @@
             <div><label class="block text-xs font-bold text-gray-500 mb-1">Описание (для КП)</label><textarea name="description" id="e_desc" rows="2" class="w-full bg-gray-50 border p-2 rounded-xl"></textarea></div>
             <div class="grid grid-cols-3 gap-4">
                 <div><label class="block text-xs font-bold text-gray-500 mb-1">Ед. изм.</label><input type="text" name="unit" id="e_unit" class="w-full bg-gray-50 border p-2 rounded-xl text-center"></div>
-                <div><label class="block text-xs font-bold text-gray-500 mb-1">Себестоимость</label><input type="number" step="0.01" name="cost" id="c_cost_edit" readonly class="w-full bg-gray-100 border p-2 rounded-xl text-right font-bold text-red-500"></div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Себестоимость</label>
+                    <input type="number" step="0.01" name="cost" id="c_cost_edit" readonly class="w-full bg-gray-100 border p-2 rounded-xl text-right font-bold text-red-500 transition-colors">
+                </div>
                 <div><label class="block text-xs font-bold text-gray-500 mb-1">Цена продажи</label><input type="number" step="0.01" name="retail_price" id="e_retail_price" required class="w-full bg-gray-50 border p-2 rounded-xl text-right font-bold text-blue-600"></div>
             </div>
 
             <div class="border p-4 rounded-xl mt-4">
-                <label class="block text-xs font-black text-blue-600 uppercase mb-2">Расчет себестоимости (Спецификация)</label>
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-xs font-black text-blue-600 uppercase">Спецификация</label>
+                    <label class="flex items-center text-xs text-gray-500 cursor-pointer font-bold select-none">
+                        <input type="checkbox" id="autoCostEdit" checked onchange="toggleAutoCost('edit')" class="mr-2 accent-blue-500 w-4 h-4"> Авто-расчет
+                    </label>
+                </div>
                 <div id="bom_rows_edit" class="space-y-2"></div>
                 <button type="button" onclick="addBomRow('edit')" class="text-xs font-bold text-blue-500 hover:underline mt-2"><i class="fas fa-plus"></i> Добавить материал/работу</button>
             </div>
@@ -154,6 +170,22 @@
         });
     }
 
+    // УПРАВЛЕНИЕ АВТО-РАСЧЕТОМ
+    function toggleAutoCost(type) {
+        const isAuto = document.getElementById(`autoCost${type === 'add' ? 'Add' : 'Edit'}`).checked;
+        const inp = document.getElementById(`c_cost_${type}`);
+        inp.readOnly = isAuto;
+        if(isAuto) {
+            inp.classList.add('bg-gray-100');
+            inp.classList.remove('bg-white', 'border-blue-300');
+            calcBom(type);
+        } else {
+            inp.classList.remove('bg-gray-100');
+            inp.classList.add('bg-white', 'border-blue-300');
+            inp.focus();
+        }
+    }
+
     function addBomRow(type, name='', price='') {
         const div = document.createElement('div');
         div.className = 'flex gap-2 mb-2 items-center';
@@ -162,6 +194,8 @@
     }
 
     function calcBom(type) {
+        const isAuto = document.getElementById(`autoCost${type === 'add' ? 'Add' : 'Edit'}`).checked;
+        if (!isAuto) return; // Если введено вручную, не пересчитываем!
         let total = 0;
         document.querySelectorAll(`.bom-price-${type}`).forEach(inp => total += parseFloat(inp.value) || 0);
         document.getElementById(`c_cost_${type}`).value = total;
@@ -170,6 +204,8 @@
     function openModal(id) { 
         if(id==='addModal') {
             document.getElementById('bom_rows_add').innerHTML = ''; addBomRow('add');
+            document.getElementById('autoCostAdd').checked = true;
+            toggleAutoCost('add');
             document.getElementById('c_cost_add').value = '0';
         }
         document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); 
@@ -191,15 +227,24 @@
         document.getElementById('e_name').value = name;
         document.getElementById('e_desc').value = desc !== 'None' ? desc : '';
         document.getElementById('e_unit').value = unit;
-        document.getElementById('c_cost_edit').value = cost;
         document.getElementById('e_retail_price').value = retail;
         document.getElementById('e_cat').value = catId;
         
         document.getElementById('bom_rows_edit').innerHTML = '';
+        let bomTotal = 0;
         try {
             const bom = JSON.parse(bomJson);
-            bom.forEach(b => addBomRow('edit', b.name, b.price));
+            bom.forEach(b => {
+                addBomRow('edit', b.name, b.price);
+                bomTotal += parseFloat(b.price) || 0;
+            });
         } catch(e) {}
+
+        // Умная проверка: если сохраненная себестоимость не сходится с суммой материалов, значит ты вводил её вручную
+        const isManual = Math.abs(bomTotal - parseFloat(cost)) > 0.01;
+        document.getElementById('autoCostEdit').checked = !isManual;
+        toggleAutoCost('edit');
+        document.getElementById('c_cost_edit').value = cost; 
 
         setEditPreview('l_e_i1', img1); setEditPreview('l_e_i2', img2); setEditPreview('l_e_i3', img3);
         openModal('editModal');

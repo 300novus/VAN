@@ -98,14 +98,30 @@
     let catalogData = [];
     let categoriesData = [];
     
-    document.addEventListener("DOMContentLoaded", function() { 
-        if(document.getElementById('knpSelect')) new TomSelect("#knpSelect", { create: false });
+document.addEventListener("DOMContentLoaded", function() { 
+        // 1. Безопасный запуск выпадающих списков (с предохранителем)
+        try {
+            if(document.getElementById('clientSelect')) new TomSelect("#clientSelect", { create: false }); 
+            if(document.getElementById('knpSelect')) new TomSelect("#knpSelect", { create: false });
+        } catch(e) {
+            console.warn('Режим бункера: красивые списки отключены, продолжаем загрузку.');
+        }
+
+        // 2. Загрузка категорий и каталога (ОБЯЗАТЕЛЬНО ОСТАВЛЯЕМ)
         fetch('/api/get_categories_json').then(r=>r.json()).then(cats => {
             categoriesData = cats;
             renderCatFilters();
-            fetch('/api/get_catalog').then(r=>r.json()).then(data => { catalogData = data; renderModalCatalog(data); });
+            fetch('/api/get_catalog').then(r=>r.json()).then(data => { 
+                catalogData = data; 
+                renderModalCatalog(data); 
+            });
         });
-        calculate();
+
+        // 3. Расчеты (если они есть в этом файле)
+        if(typeof calculate === 'function') {
+            if(document.querySelectorAll('.item-row').length === 0 && typeof addRow === 'function') addRow(); 
+            else calculate();
+        }
     });
 
     function renderCatFilters() {
