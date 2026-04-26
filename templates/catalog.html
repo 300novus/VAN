@@ -1,15 +1,22 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="p-10 max-w-7xl mx-auto">
+<div class="p-10 max-w-7xl mx-auto pb-32">
     <div class="flex justify-between items-center mb-6">
         <h2 class="text-3xl font-black text-gray-900">Каталог МАФ и изделий</h2>
         <button onclick="openModal('addModal')" class="bg-green-500 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-green-600 transition shadow-lg shadow-green-200"><i class="fas fa-plus mr-2"></i> Добавить изделие</button>
     </div>
     
     <div class="flex space-x-2 overflow-x-auto pb-4 mb-6 scrollbar-hide">
-        <button class="cat-btn active bg-gray-900 text-white px-5 py-2 rounded-full text-sm font-bold shadow transition" onclick="filterCat('all', this)">Все</button>
+        <button class="cat-btn active bg-gray-900 text-white px-5 py-2 rounded-full text-sm font-bold shadow transition flex items-center" onclick="filterCat('all', this)">Все</button>
         {% for cat in categories %}
-        <button class="cat-btn bg-white text-gray-600 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold hover:bg-gray-50 transition whitespace-nowrap" onclick="filterCat('{{ cat.id }}', this)"><i class="fas {{ cat.icon }} mr-1 text-gray-400"></i> {{ cat.name }}</button>
+        <button class="cat-btn bg-white text-gray-600 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold hover:bg-gray-50 transition whitespace-nowrap flex items-center" onclick="filterCat('{{ cat.id }}', this)">
+            {% if cat.icon and (cat.icon.endswith('.png') or cat.icon.endswith('.svg') or cat.icon.endswith('.jpg') or cat.icon.endswith('.webp')) %}
+                <img src="/static/category_icons/{{ cat.icon }}" class="w-4 h-4 object-contain inline-block mr-2">
+            {% else %}
+                <i class="fas {{ cat.icon if cat.icon else 'fa-folder' }} mr-2 text-gray-400"></i>
+            {% endif %}
+            {{ cat.name }}
+        </button>
         {% endfor %}
     </div>
 
@@ -26,7 +33,15 @@
             <div class="p-6 flex flex-col flex-1">
                 <div class="flex justify-between items-start mb-2">
                     <h3 class="font-black text-lg text-gray-900 leading-tight item-name">{{ item.name }}</h3>
-                    {% for cat in categories %}{% if cat.id == item.cat_id %}<i class="fas {{ cat.icon }} text-gray-300 ml-2 mt-1" title="{{ cat.name }}"></i>{% endif %}{% endfor %}
+                    {% for cat in categories %}
+                        {% if cat.id == item.cat_id %}
+                            {% if cat.icon and (cat.icon.endswith('.png') or cat.icon.endswith('.svg') or cat.icon.endswith('.jpg') or cat.icon.endswith('.webp')) %}
+                                <img src="/static/category_icons/{{ cat.icon }}" class="w-4 h-4 object-contain inline-block ml-2 mt-1 opacity-50" title="{{ cat.name }}">
+                            {% else %}
+                                <i class="fas {{ cat.icon }} text-gray-300 ml-2 mt-1" title="{{ cat.name }}"></i>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
                 </div>
                 <p class="text-xs text-gray-500 mb-4 line-clamp-2 flex-1 item-desc">{{ item.desc }}</p>
                 <div class="flex justify-between items-end border-t border-gray-100 pt-4 mt-auto">
@@ -34,7 +49,7 @@
                         <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Себест: <span class="text-red-400 item-cost">{{ '{:,.0f}'.format(item.cost).replace(',', ' ') }}</span></p>
                         <p class="font-black text-blue-600 text-lg"><span class="item-retail">{{ '{:,.0f}'.format(item.retail_price).replace(',', ' ') }}</span> тг</p>
                     </div>
-                    <div class="space-x-2">
+                    <div class="space-x-2 flex">
                         <button onclick="handleEditClick('{{ item.id }}', '{{ item.unit }}', '{{ item.cat_id }}', '{{ item.img1 }}', '{{ item.img2 }}', '{{ item.img3 }}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 w-10 h-10 flex items-center justify-center rounded-xl transition"><i class="fas fa-pen"></i></button>
                         <button onclick="deleteCatalogItem('{{ item.id }}')" class="text-red-400 hover:text-red-600 bg-red-50 w-10 h-10 flex items-center justify-center rounded-xl transition"><i class="fas fa-trash-alt"></i></button>
                     </div>
@@ -46,88 +61,124 @@
 </div>
 
 <div id="addModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center backdrop-blur-sm z-50">
-    <div class="bg-white p-8 rounded-3xl w-[700px] shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div class="bg-white p-8 rounded-3xl w-[700px] shadow-2xl max-h-[90vh] overflow-y-auto relative">
+        <button onclick="closeModal('addModal')" class="absolute top-6 right-6 text-gray-400 hover:text-gray-900"><i class="fas fa-times text-xl"></i></button>
         <h3 class="text-xl font-black mb-6">Новое изделие</h3>
         <form action="/api/add_catalog" method="POST" enctype="multipart/form-data" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div><label class="block text-xs font-bold text-gray-500 mb-1">Название</label><input type="text" name="name" required class="w-full bg-gray-50 border p-2 rounded-xl"></div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Категория</label>
+                    <select name="category_id" class="w-full bg-gray-50 border p-2 rounded-xl">
+                        <option value="0">Без категории</option>
+                        {% for c in categories %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div><label class="block text-xs font-bold text-gray-500 mb-1">Описание (для КП)</label><textarea name="description" rows="2" class="w-full bg-gray-50 border p-2 rounded-xl"></textarea></div>
             <div class="grid grid-cols-3 gap-4">
-                <div class="col-span-2"><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Наименование</label><input name="name" required class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none font-bold"></div>
-                <div class="col-span-1"><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Категория</label><select name="category_id" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none font-bold text-sm"><option value="0">Без категории</option>{% for c in categories %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></div>
+                <div><label class="block text-xs font-bold text-gray-500 mb-1">Ед. изм.</label><input type="text" name="unit" value="шт." class="w-full bg-gray-50 border p-2 rounded-xl text-center"></div>
+                <div><label class="block text-xs font-bold text-gray-500 mb-1">Себестоимость</label><input type="number" step="0.01" name="cost" id="c_cost_add" readonly class="w-full bg-gray-100 border p-2 rounded-xl text-right font-bold text-red-500" value="0"></div>
+                <div><label class="block text-xs font-bold text-gray-500 mb-1">Цена продажи</label><input type="number" step="0.01" name="retail_price" required class="w-full bg-gray-50 border p-2 rounded-xl text-right font-bold text-blue-600"></div>
             </div>
-            <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Описание</label><textarea name="description" rows="2" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none resize-none text-sm"></textarea></div>
-            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mt-4">
-                <div class="flex justify-between items-center mb-3"><label class="block text-[10px] font-black text-gray-500 uppercase">Себестоимость (Материалы)</label><button type="button" onclick="addBomRow('add')" class="text-xs font-bold text-blue-600 hover:text-blue-800"><i class="fas fa-plus"></i> Добавить материал</button></div>
-                <div id="bom_rows_add" class="space-y-2 mb-3"></div>
-                <div class="grid grid-cols-3 gap-4 border-t border-gray-200 pt-3">
-                    <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Ед. изм.</label><input name="unit" value="шт." class="w-full bg-white border border-gray-200 p-2 rounded-lg text-center font-bold outline-none text-sm"></div>
-                    <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Итого Себест.</label><input type="number" id="c_cost_add" name="cost" step="0.01" required class="w-full bg-white border border-gray-200 p-2 rounded-lg text-right font-black text-red-500 outline-none text-sm"></div>
-                    <div><label class="block text-[10px] font-black text-blue-500 uppercase mb-1">Цена продажи</label><input type="number" name="retail_price" step="0.01" required class="w-full bg-blue-50 border border-blue-200 p-2 rounded-lg text-right font-black text-blue-700 outline-none text-sm"></div>
+
+            <div class="border p-4 rounded-xl mt-4">
+                <label class="block text-xs font-black text-blue-600 uppercase mb-2">Расчет себестоимости (Спецификация)</label>
+                <div id="bom_rows_add" class="space-y-2"></div>
+                <button type="button" onclick="addBomRow('add')" class="text-xs font-bold text-blue-500 hover:underline mt-2"><i class="fas fa-plus"></i> Добавить материал/работу</button>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 mt-4">
+                {% for i in range(1, 4) %}
+                <div class="relative h-24 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center hover:bg-gray-50 overflow-hidden group">
+                    <input type="file" name="img{{ i }}" class="absolute inset-0 opacity-0 cursor-pointer z-10" onchange="previewImg(this, 'l_a_i{{ i }}')">
+                    <i class="fas fa-camera text-gray-300 text-xl group-hover:text-blue-400"></i>
+                    <img id="l_a_i{{ i }}" class="absolute inset-0 w-full h-full object-cover hidden">
                 </div>
+                {% endfor %}
             </div>
-            <div class="pt-4 border-t border-gray-100">
-                <div class="flex gap-4">
-                    <div class="w-1/3"><input type="file" name="img1" onchange="previewImg(this)" class="hidden" id="c_i1"><label for="c_i1" class="cursor-pointer block w-full h-20 bg-gray-50 rounded-xl border border-dashed border-gray-300 flex items-center justify-center text-gray-400 overflow-hidden"><i class="fas fa-plus"></i></label></div>
-                    <div class="w-1/3"><input type="file" name="img2" onchange="previewImg(this)" class="hidden" id="c_i2"><label for="c_i2" class="cursor-pointer block w-full h-20 bg-gray-50 rounded-xl border border-dashed border-gray-300 flex items-center justify-center text-gray-400 overflow-hidden"><i class="fas fa-plus"></i></label></div>
-                    <div class="w-1/3"><input type="file" name="img3" onchange="previewImg(this)" class="hidden" id="c_i3"><label for="c_i3" class="cursor-pointer block w-full h-20 bg-gray-50 rounded-xl border border-dashed border-gray-300 flex items-center justify-center text-gray-400 overflow-hidden"><i class="fas fa-plus"></i></label></div>
-                </div>
-            </div>
-            <div class="pt-6 flex gap-3"><button type="button" onclick="closeModal('addModal')" class="flex-1 bg-gray-100 font-bold py-3 rounded-xl">Отмена</button><button type="submit" class="flex-1 bg-green-500 text-white font-bold py-3 rounded-xl shadow-lg">Сохранить</button></div>
+            <button type="submit" class="w-full bg-green-500 text-white py-3 rounded-xl font-black mt-4">Сохранить в каталог</button>
         </form>
     </div>
 </div>
 
 <div id="editModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center backdrop-blur-sm z-50">
-    <div class="bg-white p-8 rounded-3xl w-[700px] shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div class="bg-white p-8 rounded-3xl w-[700px] shadow-2xl max-h-[90vh] overflow-y-auto relative">
+        <button onclick="closeModal('editModal')" class="absolute top-6 right-6 text-gray-400 hover:text-gray-900"><i class="fas fa-times text-xl"></i></button>
         <h3 class="text-xl font-black mb-6">Редактировать изделие</h3>
         <form action="/api/edit_catalog" method="POST" enctype="multipart/form-data" class="space-y-4">
             <input type="hidden" name="item_id" id="e_item_id">
+            <div class="grid grid-cols-2 gap-4">
+                <div><label class="block text-xs font-bold text-gray-500 mb-1">Название</label><input type="text" name="name" id="e_name" required class="w-full bg-gray-50 border p-2 rounded-xl"></div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Категория</label>
+                    <select name="category_id" id="e_cat" class="w-full bg-gray-50 border p-2 rounded-xl">
+                        <option value="0">Без категории</option>
+                        {% for c in categories %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div><label class="block text-xs font-bold text-gray-500 mb-1">Описание (для КП)</label><textarea name="description" id="e_desc" rows="2" class="w-full bg-gray-50 border p-2 rounded-xl"></textarea></div>
             <div class="grid grid-cols-3 gap-4">
-                <div class="col-span-2"><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Наименование</label><input name="name" id="e_name" required class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl font-bold outline-none"></div>
-                <div class="col-span-1"><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Категория</label><select name="category_id" id="e_cat" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl font-bold outline-none text-sm"><option value="0">Без категории</option>{% for c in categories %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></div>
+                <div><label class="block text-xs font-bold text-gray-500 mb-1">Ед. изм.</label><input type="text" name="unit" id="e_unit" class="w-full bg-gray-50 border p-2 rounded-xl text-center"></div>
+                <div><label class="block text-xs font-bold text-gray-500 mb-1">Себестоимость</label><input type="number" step="0.01" name="cost" id="c_cost_edit" readonly class="w-full bg-gray-100 border p-2 rounded-xl text-right font-bold text-red-500"></div>
+                <div><label class="block text-xs font-bold text-gray-500 mb-1">Цена продажи</label><input type="number" step="0.01" name="retail_price" id="e_retail_price" required class="w-full bg-gray-50 border p-2 rounded-xl text-right font-bold text-blue-600"></div>
             </div>
-            <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Описание</label><textarea name="description" id="e_desc" rows="2" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none resize-none text-sm"></textarea></div>
-            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mt-4">
-                <div class="flex justify-between items-center mb-3"><label class="block text-[10px] font-black text-gray-500 uppercase">Себестоимость (Материалы)</label><button type="button" onclick="addBomRow('edit')" class="text-xs font-bold text-blue-600 hover:text-blue-800"><i class="fas fa-plus"></i> Добавить материал</button></div>
-                <div id="bom_rows_edit" class="space-y-2 mb-3"></div>
-                <div class="grid grid-cols-3 gap-4 border-t border-gray-200 pt-3">
-                    <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Ед. изм.</label><input name="unit" id="e_unit" class="w-full bg-white border border-gray-200 p-2 rounded-lg text-center font-bold outline-none text-sm"></div>
-                    <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Итого Себест.</label><input type="number" id="c_cost_edit" name="cost" step="0.01" required class="w-full bg-white border border-gray-200 p-2 rounded-lg text-right font-black text-red-500 outline-none text-sm"></div>
-                    <div><label class="block text-[10px] font-black text-blue-500 uppercase mb-1">Цена продажи</label><input type="number" name="retail_price" id="e_retail_price" step="0.01" required class="w-full bg-blue-50 border border-blue-200 p-2 rounded-lg text-right font-black text-blue-700 outline-none text-sm"></div>
+
+            <div class="border p-4 rounded-xl mt-4">
+                <label class="block text-xs font-black text-blue-600 uppercase mb-2">Расчет себестоимости (Спецификация)</label>
+                <div id="bom_rows_edit" class="space-y-2"></div>
+                <button type="button" onclick="addBomRow('edit')" class="text-xs font-bold text-blue-500 hover:underline mt-2"><i class="fas fa-plus"></i> Добавить материал/работу</button>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 mt-4">
+                {% for i in range(1, 4) %}
+                <div class="relative h-24 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center hover:bg-gray-50 overflow-hidden group">
+                    <input type="file" name="img{{ i }}" class="absolute inset-0 opacity-0 cursor-pointer z-10" onchange="previewImg(this, 'l_e_i{{ i }}')">
+                    <i class="fas fa-camera text-gray-300 text-xl group-hover:text-blue-400"></i>
+                    <img id="l_e_i{{ i }}" class="absolute inset-0 w-full h-full object-cover hidden">
                 </div>
+                {% endfor %}
             </div>
-            <div class="pt-4 border-t border-gray-100">
-                <div class="flex gap-4">
-                    <div class="w-1/3"><input type="file" name="img1" onchange="previewImg(this)" class="hidden" id="e_i1"><label for="e_i1" id="l_e_i1" class="cursor-pointer block w-full h-20 bg-gray-50 rounded-xl border border-dashed border-gray-300 flex items-center justify-center text-gray-400 overflow-hidden"><i class="fas fa-plus"></i></label></div>
-                    <div class="w-1/3"><input type="file" name="img2" onchange="previewImg(this)" class="hidden" id="e_i2"><label for="e_i2" id="l_e_i2" class="cursor-pointer block w-full h-20 bg-gray-50 rounded-xl border border-dashed border-gray-300 flex items-center justify-center text-gray-400 overflow-hidden"><i class="fas fa-plus"></i></label></div>
-                    <div class="w-1/3"><input type="file" name="img3" onchange="previewImg(this)" class="hidden" id="e_i3"><label for="e_i3" id="l_e_i3" class="cursor-pointer block w-full h-20 bg-gray-50 rounded-xl border border-dashed border-gray-300 flex items-center justify-center text-gray-400 overflow-hidden"><i class="fas fa-plus"></i></label></div>
-                </div>
-            </div>
-            <div class="pt-6 flex gap-3"><button type="button" onclick="closeModal('editModal')" class="flex-1 bg-gray-100 font-bold py-3 rounded-xl">Отмена</button><button type="submit" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg">Обновить</button></div>
+            <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-xl font-black mt-4">Сохранить изменения</button>
         </form>
     </div>
 </div>
 
 <script>
     function filterCat(id, btn) {
-        document.querySelectorAll('.cat-btn').forEach(b => { b.classList.remove('bg-gray-900', 'text-white', 'shadow'); b.classList.add('bg-white', 'text-gray-600'); });
-        btn.classList.remove('bg-white', 'text-gray-600'); btn.classList.add('bg-gray-900', 'text-white', 'shadow');
-        document.querySelectorAll('.catalog-card').forEach(card => {
-            if(id === 'all' || card.dataset.cat === id) card.style.display = 'flex';
-            else card.style.display = 'none';
+        document.querySelectorAll('.cat-btn').forEach(b => { b.classList.remove('bg-gray-900', 'text-white', 'active', 'shadow'); b.classList.add('bg-white', 'text-gray-600'); });
+        btn.classList.remove('bg-white', 'text-gray-600'); btn.classList.add('bg-gray-900', 'text-white', 'active', 'shadow');
+        document.querySelectorAll('.catalog-card').forEach(item => {
+            if(id === 'all' || item.dataset.cat === id) item.style.display = 'flex'; else item.style.display = 'none';
         });
     }
-    function addBomRow(prefix, name='', price='') {
-        const html = `<div class="flex gap-2 items-center mb-2"><input type="text" name="bom_name[]" value="${name}" placeholder="Материал" class="flex-1 bg-white border border-gray-200 p-2 rounded-lg text-sm outline-none"><input type="number" name="bom_price[]" value="${price}" placeholder="Сумма" step="0.01" class="w-32 bg-white border border-gray-200 p-2 rounded-lg text-sm text-right font-bold text-red-500 outline-none bom-price" oninput="calcBomTotal('${prefix}')"><button type="button" onclick="this.parentElement.remove(); calcBomTotal('${prefix}');" class="text-red-400 hover:text-red-600 w-6"><i class="fas fa-times"></i></button></div>`;
-        document.getElementById(`bom_rows_${prefix}`).insertAdjacentHTML('beforeend', html);
+
+    function addBomRow(type, name='', price='') {
+        const div = document.createElement('div');
+        div.className = 'flex gap-2 mb-2 items-center';
+        div.innerHTML = `<input type="text" name="bom_name[]" value="${name}" placeholder="Наименование" class="flex-1 bg-gray-50 border p-1.5 rounded-lg text-sm"><input type="number" step="0.01" name="bom_price[]" value="${price}" placeholder="Сумма" class="w-24 bg-gray-50 border p-1.5 rounded-lg text-sm text-right font-bold bom-price-${type}" oninput="calcBom('${type}')"><button type="button" onclick="this.parentElement.remove(); calcBom('${type}')" class="text-gray-400 hover:text-red-500"><i class="fas fa-times"></i></button>`;
+        document.getElementById(`bom_rows_${type}`).appendChild(div);
     }
-    function calcBomTotal(prefix) {
-        let sum = 0;
-        document.getElementById(`bom_rows_${prefix}`).querySelectorAll('.bom-price').forEach(inp => sum += parseFloat(inp.value || 0));
-        document.getElementById(`c_cost_${prefix}`).value = sum;
+
+    function calcBom(type) {
+        let total = 0;
+        document.querySelectorAll(`.bom-price-${type}`).forEach(inp => total += parseFloat(inp.value) || 0);
+        document.getElementById(`c_cost_${type}`).value = total;
     }
-    function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
-    function deleteCatalogItem(id) { if(confirm('Удалить?')) { fetch(`/api/delete_catalog/${id}`, { method: 'POST' }).then(() => window.location.reload()); } }
+
+    function openModal(id) { 
+        if(id==='addModal') {
+            document.getElementById('bom_rows_add').innerHTML = ''; addBomRow('add');
+            document.getElementById('c_cost_add').value = '0';
+        }
+        document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); 
+    }
     
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
+
+    function deleteCatalogItem(id) { if(confirm('Удалить?')) { fetch(`/api/delete_catalog/${id}`, { method: 'POST' }).then(() => window.location.reload()); } }
+
     function handleEditClick(id, unit, catId, img1, img2, img3) {
         const card = document.getElementById(`item-${id}`);
         const name = card.querySelector('.item-name').innerText.trim();
@@ -154,15 +205,16 @@
         openModal('editModal');
     }
 
-    function setEditPreview(labelId, imgFilename) {
-        const label = document.getElementById(labelId);
-        if (imgFilename && imgFilename !== '' && imgFilename !== 'None') { label.innerHTML = `<img src="/static/uploads/${imgFilename}" class="w-full h-full object-cover">`; label.classList.remove('border-dashed', 'text-gray-400'); }
-        else { label.innerHTML = `<i class="fas fa-plus"></i>`; label.classList.add('border-dashed', 'text-gray-400'); }
+    function setEditPreview(imgId, imgName) {
+        const img = document.getElementById(imgId);
+        if(imgName && imgName !== 'None') { img.src = `/static/uploads/${imgName}`; img.classList.remove('hidden'); }
+        else { img.src = ''; img.classList.add('hidden'); }
     }
-    function previewImg(input) {
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
-            reader.onload = function(e) { input.nextElementSibling.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`; input.nextElementSibling.classList.remove('border-dashed', 'text-gray-400'); }
+
+    function previewImg(input, imgId) {
+        if(input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) { document.getElementById(imgId).src = e.target.result; document.getElementById(imgId).classList.remove('hidden'); }
             reader.readAsDataURL(input.files[0]);
         }
     }

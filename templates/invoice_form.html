@@ -106,7 +106,15 @@
 
     function renderCatFilters() {
         let html = `<button class="bg-black text-white px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap" onclick="filterModalCat('all', this)">Все</button>`;
-        categoriesData.forEach(cat => { html += `<button class="bg-gray-100 text-gray-600 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-gray-200 whitespace-nowrap" onclick="filterModalCat('${cat.id}', this)"><i class="fas ${cat.icon} mr-1"></i>${cat.name}</button>`; });
+        categoriesData.forEach(cat => { 
+            let iconHtml = '';
+            if (cat.icon && (cat.icon.includes('.png') || cat.icon.includes('.svg') || cat.icon.includes('.jpg') || cat.icon.includes('.webp'))) {
+                iconHtml = `<img src="/static/category_icons/${cat.icon}" class="w-3 h-3 object-contain inline-block mr-2">`;
+            } else {
+                iconHtml = `<i class="fas ${cat.icon || 'fa-folder'} mr-2 text-gray-400"></i>`;
+            }
+            html += `<button class="bg-gray-100 text-gray-600 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-gray-200 whitespace-nowrap flex items-center" onclick="filterModalCat('${cat.id}', this)">${iconHtml}${cat.name}</button>`; 
+        });
         document.getElementById('modalCatFilters').innerHTML = html;
     }
 
@@ -121,10 +129,16 @@
         items.forEach(item => {
             let imgHtml = item.img1 && item.img1 !== 'None' ? `<img src="/static/uploads/${item.img1}" class="w-14 h-14 object-cover rounded-xl border border-gray-200">` : `<div class="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 border border-gray-200"><i class="fas fa-image"></i></div>`;
             let catObj = categoriesData.find(c => String(c.id) === String(item.cat_id));
-            let catIconHtml = catObj ? `<i class="fas ${catObj.icon} text-gray-400 ml-2" title="${catObj.name}"></i>` : '';
-            // ИСПРАВЛЕНО: Передаем только item.id
+            let catIconHtml = '';
+            if(catObj) {
+                if(catObj.icon && (catObj.icon.includes('.png') || catObj.icon.includes('.svg') || catObj.icon.includes('.jpg') || catObj.icon.includes('.webp'))) {
+                    catIconHtml = `<img src="/static/category_icons/${catObj.icon}" class="w-3 h-3 object-contain inline-block ml-2 opacity-50">`;
+                } else {
+                    catIconHtml = `<i class="fas ${catObj.icon} text-gray-400 ml-2" title="${catObj.name}"></i>`;
+                }
+            }
             html += `<div class="flex justify-between items-center bg-gray-50 p-3 rounded-2xl border border-gray-100 hover:border-blue-300 transition cursor-pointer" onclick="addItemFromCatalog('${item.id}')">
-                <div class="flex items-center gap-4">${imgHtml}<div><div class="font-bold text-md text-gray-900">${item.name}${catIconHtml}</div><div class="text-xs text-gray-500 mt-1">Себест: ${item.cost} тг</div></div></div>
+                <div class="flex items-center gap-4">${imgHtml}<div><div class="font-bold text-md text-gray-900 flex items-center">${item.name}${catIconHtml}</div><div class="text-xs text-gray-500 mt-1">Себест: ${item.cost} тг</div></div></div>
                 <div class="text-right mr-4"><div class="text-blue-600 font-black text-lg">${item.retail_price} тг</div><div class="text-xs text-gray-500">За ${item.unit}</div></div>
             </div>`;
         });
@@ -134,7 +148,6 @@
     function openCatalogModal() { document.getElementById('catalogModal').classList.remove('hidden'); document.getElementById('catalogModal').classList.add('flex'); }
     function closeCatalogModal() { document.getElementById('catalogModal').classList.add('hidden'); document.getElementById('catalogModal').classList.remove('flex'); }
     
-    // ИСПРАВЛЕНО: Функция теперь ищет товар в catalogData по ID
     function addItemFromCatalog(itemId) { 
         const item = catalogData.find(i => String(i.id) === String(itemId));
         if(!item) return;
