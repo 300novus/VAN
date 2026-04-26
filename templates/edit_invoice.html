@@ -2,52 +2,64 @@
 {% block content %}
 <div class="p-8 max-w-7xl mx-auto pb-32">
     <div class="flex justify-between items-end mb-8">
-        <h2 class="text-3xl font-black text-gray-900 tracking-tight">Счет №{{ inv[0] }}</h2>
-        <button onclick="openCatalogModal()" type="button" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200"><i class="fas fa-cubes mr-2"></i> Из каталога</button>
+        <div>
+            <h2 class="text-3xl font-black text-gray-900 tracking-tight">Редактирование</h2>
+            <p class="text-gray-400 font-bold text-xs uppercase tracking-widest mt-1">Счёт № {{ inv[0] }}</p>
+        </div>
+        <button onclick="openCatalogModal()" type="button" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg"><i class="fas fa-cubes mr-2"></i> Из каталога</button>
     </div>
 
-    <form method="POST" action="/edit_invoice/{{ inv[0] }}" class="grid grid-cols-12 gap-8">
+    <form method="POST" class="grid grid-cols-12 gap-8">
         <div class="col-span-8 space-y-6">
             <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-                <div class="grid grid-cols-4 gap-6 mb-6">
-                    <div class="col-span-2"><label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Заказчик</label><input type="text" disabled value="{% for c in clients %}{% if inv[1] == c[0] %}{{ c[1] }}{% endif %}{% endfor %}" class="w-full bg-gray-100 border border-gray-200 p-2.5 rounded-xl font-bold outline-none text-gray-500"></div>
-                    <div class="col-span-1"><label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Дата</label><input type="text" disabled value="{{ inv[2] }}" class="w-full bg-gray-100 border border-gray-200 p-2.5 rounded-xl font-bold outline-none text-center text-gray-500"></div>
-                    <div class="col-span-1"><label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Код КНП</label><select name="knp" id="knpSelect">{% for k in knp_list %}<option value="{{ k[0] }}" {% if k[0] == current_knp %}selected{% endif %}>{{ k[0] }} - {{ k[1] }}</option>{% endfor %}</select></div>
+                <div class="grid grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Заказчик</label>
+                        <div class="bg-gray-50 p-3 rounded-xl font-bold text-gray-400 border border-gray-100">
+                            {% for c in clients %}{% if inv[1] == c[0] %}{{ c[1] }}{% endif %}{% endfor %}
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Код КНП</label>
+                        <select name="knp" id="knpSelect">
+                            {% for k in knp_list %}<option value="{{ k[0] }}" {% if k[0] == inv[8] %}selected{% endif %}>{{ k[0] }} - {{ k[1] }}</option>{% endfor %}
+                        </select>
+                    </div>
                 </div>
-                
+
                 <div id="itemsContainer" class="space-y-4 border-t border-gray-50 pt-6">
                     {% for item in items %}
                     <div class="item-row grid grid-cols-12 gap-4 items-end bg-gray-50 p-4 rounded-2xl border border-gray-100 relative group animate-fade-in">
                         <div class="col-span-5"><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Наименование</label><input type="text" name="item[]" value="{{ item[2] }}" required class="w-full bg-white border border-gray-200 p-2.5 rounded-xl font-bold outline-none text-sm"></div>
-                        <div class="col-span-2"><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Ед. изм.</label><input type="text" name="unit[]" value="{{ item[3] }}" required class="w-full bg-white border border-gray-200 p-2.5 rounded-xl text-center outline-none text-sm"></div>
-                        <div class="col-span-2"><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Кол-во</label><input type="number" step="0.01" name="qty[]" value="{{ '{:.0f}'.format(item[4]) }}" required class="qty-input w-full bg-white border border-gray-200 p-2.5 rounded-xl text-center font-black text-blue-600 outline-none" oninput="calculate()"></div>
-                        <div class="col-span-2"><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Цена (тг)</label><input type="number" step="0.01" name="price[]" value="{{ '{:.0f}'.format(item[5]) }}" required class="price-input w-full bg-white border border-gray-200 p-2.5 rounded-xl text-right font-black outline-none" oninput="calculate()"></div>
+                        <div class="col-span-2"><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Ед.</label><input type="text" name="unit[]" value="{{ item[3] }}" required class="w-full bg-white border border-gray-200 p-2.5 rounded-xl text-center outline-none text-sm"></div>
+                        <div class="col-span-2"><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Кол-во</label><input type="number" step="0.01" name="qty[]" value="{{ item[4] }}" required class="qty-input w-full bg-white border border-gray-200 p-2.5 rounded-xl text-center font-black text-blue-600 outline-none" oninput="calculate()"></div>
+                        <div class="col-span-2"><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Цена (тг)</label><input type="number" step="0.01" name="price[]" value="{{ item[5] }}" required class="price-input w-full bg-white border border-gray-200 p-2.5 rounded-xl text-right font-black outline-none" oninput="calculate()"></div>
                         <div class="col-span-1 pb-2 text-center"><button type="button" class="text-red-400 hover:text-red-600 bg-red-50 p-2.5 rounded-xl" onclick="removeRow(this)"><i class="fas fa-trash-alt"></i></button></div>
                     </div>
                     {% endfor %}
                 </div>
-                <button type="button" onclick="addRow()" class="text-blue-600 font-bold text-sm hover:underline mt-4"><i class="fas fa-plus mr-1"></i> Добавить позицию вручную</button>
+                <button type="button" onclick="addRow()" class="text-blue-600 font-bold text-sm hover:underline mt-4"><i class="fas fa-plus mr-1"></i> Добавить позицию</button>
 
                 <div class="flex justify-between items-start bg-gray-900 p-8 rounded-3xl text-white shadow-xl mt-8">
-                    <div class="flex items-center space-x-3"><input type="checkbox" id="vatToggle" class="w-5 h-5 rounded accent-blue-500" onchange="calculate()" {% if inv[4] > 0 %}checked{% endif %}><label for="vatToggle" class="font-bold text-sm">Учитывать НДС (12%)</label><input type="hidden" name="vat" id="vatValue" value="{{ '{:.0f}'.format(inv[4]) }}"></div>
+                    <div class="flex items-center space-x-3"><input type="checkbox" id="vatToggle" class="w-5 h-5 rounded accent-blue-500" {% if inv[4] > 0 %}checked{% endif %} onchange="calculate()"><label for="vatToggle" class="font-bold text-sm">НДС (12%)</label><input type="hidden" name="vat" id="vatValue" value="{{ inv[4] }}"></div>
                     <div class="text-right space-y-2">
                         <div class="text-gray-400 text-xs font-bold uppercase tracking-widest">К оплате</div>
                         <div class="text-4xl font-black text-white"><span id="lblTotal">0</span> <span class="text-lg opacity-50">тг</span></div>
                         <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">В т.ч. НДС: <span id="lblVat">0</span> тг</div>
                     </div>
                 </div>
-                <div class="pt-6"><button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-blue-200 hover:bg-blue-700 transition uppercase tracking-widest">Обновить счёт</button></div>
+                <div class="pt-6"><button type="submit" class="w-full bg-black text-white py-4 rounded-2xl font-black text-lg shadow-lg hover:bg-gray-800 transition uppercase tracking-widest">Обновить информацию</button></div>
             </div>
         </div>
-        
+
         <div class="col-span-4 space-y-6">
             <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                 <h3 class="font-black text-gray-900 mb-4">Себестоимость</h3>
                 <div id="costsContainer" class="space-y-3">
-                    {% for c in costs %}
+                    {% for cost in costs %}
                     <div class="cost-row flex gap-2 items-center bg-gray-50 p-2 rounded-xl border border-gray-100 animate-fade-in">
-                        <input type="text" name="cost_label[]" value="{{ c[0] }}" placeholder="Назначение" required class="flex-1 bg-white border border-gray-200 p-2.5 rounded-xl text-sm font-bold outline-none">
-                        <input type="number" step="0.01" name="cost_value[]" value="{{ '{:.0f}'.format(c[1]) }}" placeholder="Сумма" required class="cost-input w-28 bg-white border border-gray-200 p-2.5 rounded-xl text-sm text-right font-black text-red-500 outline-none" oninput="calculate()">
+                        <input type="text" name="cost_label[]" value="{{ cost[0] }}" placeholder="Назначение" required class="flex-1 bg-white border border-gray-200 p-2.5 rounded-xl text-sm font-bold outline-none">
+                        <input type="number" step="0.01" name="cost_value[]" value="{{ cost[1] }}" placeholder="Сумма" required class="cost-input w-28 bg-white border border-gray-200 p-2.5 rounded-xl text-sm text-right font-black text-red-500 outline-none" oninput="calculate()">
                         <button type="button" onclick="this.closest('.cost-row').remove(); calculate();" class="text-gray-400 hover:text-red-500 w-8"><i class="fas fa-times"></i></button>
                     </div>
                     {% endfor %}
@@ -64,7 +76,7 @@
                     </svg>
                     <div class="absolute inset-0 flex flex-col items-center justify-center"><span id="lblMargin" class="text-4xl font-black text-white">0%</span></div>
                 </div>
-                <div class="text-gray-400 text-xs font-bold uppercase mb-1 tracking-widest">Ожидаемая прибыль</div>
+                <div class="text-gray-400 text-xs font-bold uppercase mb-1 tracking-widest">Текущая прибыль</div>
                 <div class="text-2xl font-black text-green-400"><span id="lblProfit">0</span> тг</div>
             </div>
         </div>
@@ -97,7 +109,7 @@
     });
 
     function renderCatFilters() {
-        let html = `<button class="bg-black text-white px-4 py-1.5 rounded-full text-xs font-bold transition whitespace-nowrap" onclick="filterModalCat('all', this)">Все</button>`;
+        let html = `<button class="bg-black text-white px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap" onclick="filterModalCat('all', this)">Все</button>`;
         categoriesData.forEach(cat => { html += `<button class="bg-gray-100 text-gray-600 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-gray-200 whitespace-nowrap" onclick="filterModalCat('${cat.id}', this)"><i class="fas ${cat.icon} mr-1"></i>${cat.name}</button>`; });
         document.getElementById('modalCatFilters').innerHTML = html;
     }
@@ -114,7 +126,8 @@
             let imgHtml = item.img1 && item.img1 !== 'None' ? `<img src="/static/uploads/${item.img1}" class="w-14 h-14 object-cover rounded-xl border border-gray-200">` : `<div class="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 border border-gray-200"><i class="fas fa-image"></i></div>`;
             let catObj = categoriesData.find(c => String(c.id) === String(item.cat_id));
             let catIconHtml = catObj ? `<i class="fas ${catObj.icon} text-gray-400 ml-2" title="${catObj.name}"></i>` : '';
-            html += `<div class="flex justify-between items-center bg-gray-50 p-3 rounded-2xl border border-gray-100 hover:border-blue-300 transition cursor-pointer" onclick="addItemFromCatalog('${item.name}', '${item.unit}', '${item.retail_price}', '${item.cost}')">
+            // ИСПРАВЛЕНО: Теперь передаем только ID
+            html += `<div class="flex justify-between items-center bg-gray-50 p-3 rounded-2xl border border-gray-100 hover:border-blue-300 transition cursor-pointer" onclick="addItemFromCatalog('${item.id}')">
                 <div class="flex items-center gap-4">${imgHtml}<div><div class="font-bold text-md text-gray-900">${item.name}${catIconHtml}</div><div class="text-xs text-gray-500 mt-1">Себест: ${item.cost} тг</div></div></div>
                 <div class="text-right mr-4"><div class="text-blue-600 font-black text-lg">${item.retail_price} тг</div><div class="text-xs text-gray-500">За ${item.unit}</div></div>
             </div>`;
@@ -124,7 +137,15 @@
 
     function openCatalogModal() { document.getElementById('catalogModal').classList.remove('hidden'); document.getElementById('catalogModal').classList.add('flex'); }
     function closeCatalogModal() { document.getElementById('catalogModal').classList.add('hidden'); document.getElementById('catalogModal').classList.remove('flex'); }
-    function addItemFromCatalog(name, unit, price, cost) { addRow(name, unit, price); if(cost && parseFloat(cost) > 0) addCostRow(name + ' (Себест.)', cost); closeCatalogModal(); }
+    
+    // ИСПРАВЛЕНО: Поиск товара в массиве по ID
+    function addItemFromCatalog(itemId) { 
+        const item = catalogData.find(i => String(i.id) === String(itemId));
+        if(!item) return;
+        addRow(item.name, item.unit, item.retail_price); 
+        if(item.cost && parseFloat(item.cost) > 0) addCostRow(item.name + ' (Себест.)', item.cost); 
+        closeCatalogModal(); 
+    }
     
     function addRow(name='', unit='шт.', price='') {
         const html = `<div class="item-row grid grid-cols-12 gap-4 items-end bg-gray-50 p-4 rounded-2xl border border-gray-100 relative animate-fade-in"><div class="col-span-5"><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Наименование</label><input type="text" name="item[]" value="${name}" required class="w-full bg-white border border-gray-200 p-2.5 rounded-xl font-bold outline-none text-sm"></div><div class="col-span-2"><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Ед.</label><input type="text" name="unit[]" value="${unit}" required class="w-full bg-white border border-gray-200 p-2.5 rounded-xl text-center outline-none text-sm"></div><div class="col-span-2"><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Кол-во</label><input type="number" step="0.01" name="qty[]" value="1" required class="qty-input w-full bg-white border border-gray-200 p-2.5 rounded-xl text-center font-black text-blue-600 outline-none" oninput="calculate()"></div><div class="col-span-2"><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Цена (тг)</label><input type="number" step="0.01" name="price[]" value="${price}" required class="price-input w-full bg-white border border-gray-200 p-2.5 rounded-xl text-right font-black outline-none" oninput="calculate()"></div><div class="col-span-1 pb-2 text-center"><button type="button" class="text-red-400 hover:text-red-600 bg-red-50 p-2.5 rounded-xl" onclick="removeRow(this)"><i class="fas fa-trash-alt"></i></button></div></div>`;
@@ -144,19 +165,24 @@
             const p = parseFloat(row.querySelector('.price-input').value) || 0;
             subtotal += q * p;
         });
-        const isVat = document.getElementById('vatToggle').checked; document.getElementById('vatValue').value = isVat ? '12' : '0';
-        const vat = isVat ? subtotal * 0.12 : 0; const total = subtotal + vat;
-        document.getElementById('lblTotal').innerText = total.toLocaleString('ru-RU', {minimumFractionDigits: 0});
-        document.getElementById('lblVat').innerText = vat.toLocaleString('ru-RU', {minimumFractionDigits: 0});
+        const isVat = document.getElementById('vatToggle').checked; 
+        document.getElementById('vatValue').value = isVat ? '12' : '0';
+        const vat = isVat ? subtotal * 0.12 : 0; 
+        const total = subtotal + vat;
+        document.getElementById('lblTotal').innerText = Math.round(total).toLocaleString('ru-RU');
+        document.getElementById('lblVat').innerText = Math.round(vat).toLocaleString('ru-RU');
 
-        let totalCost = 0; document.querySelectorAll('.cost-input').forEach(inp => { totalCost += parseFloat(inp.value) || 0; });
-        const realProfit = subtotal - totalCost; const margin = subtotal > 0 ? (realProfit / subtotal) * 100 : 0;
-        document.getElementById('lblProfit').innerText = realProfit.toLocaleString('ru-RU', {maximumFractionDigits: 0});
+        let totalCost = 0; 
+        document.querySelectorAll('.cost-input').forEach(inp => { totalCost += parseFloat(inp.value) || 0; });
+        const realProfit = subtotal - totalCost; 
+        const margin = subtotal > 0 ? (realProfit / subtotal) * 100 : 0;
+        document.getElementById('lblProfit').innerText = Math.round(realProfit).toLocaleString('ru-RU');
         document.getElementById('lblMargin').innerText = Math.round(margin) + '%';
-        let circle = document.getElementById('profitCircle'); let color = 'text-green-500';
-        if(margin < 10) color = 'text-red-500'; else if(margin < 30) color = 'text-yellow-500';
+        let circle = document.getElementById('profitCircle'); 
+        let color = 'text-green-500';
+        if(margin < 15) color = 'text-red-500'; else if(margin < 35) color = 'text-yellow-500';
         circle.className = `transition-all duration-1000 ease-out ${color}`;
-        circle.setAttribute('stroke-dasharray', `${Math.max(0, margin)}, 100`);
+        circle.setAttribute('stroke-dasharray', `${Math.max(0, Math.min(100, margin))}, 100`);
     }
 </script>
 {% endblock %}
