@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="p-10 max-w-5xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+        <h2 class="text-3xl font-black text-gray-900">Аналитика счета №{{ inv_id }}</h2>
+        <a href="/invoices" class="bg-black text-white px-6 py-2 rounded-xl font-bold hover:bg-gray-800">Назад к счетам</a>
+    </div>
+    <div class="grid grid-cols-2 gap-8">
+        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+            <h3 class="text-[10px] font-black text-gray-400 uppercase mb-6 tracking-widest">Структура себестоимости</h3>
+            <div class="space-y-4">
+                {% if costs %}
+                    {% for label, val in costs %}
+                    <div class="flex justify-between items-center border-b border-gray-50 pb-3">
+                        <span class="font-bold text-gray-700 text-lg">{{ label }}</span>
+                        <span class="font-black text-gray-900 text-xl">{{ '{:,.0f}'.format(val).replace(',', ' ') }} тг</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-10 text-gray-400 font-bold">Данные о себестоимости не были заполнены при создании счета.</div>
+                {% endif %}
+                <div class="flex justify-between items-center pt-6 text-gray-400 font-black">
+                    <span class="uppercase tracking-widest text-xs">ИТОГО РАСХОДОВ:</span>
+                    <span class="text-2xl text-gray-800">{{ '{:,.0f}'.format(total_cost).replace(',', ' ') }} тг</span>
+                </div>
+            </div>
+        </div>
+        <div class="bg-gradient-to-br from-gray-900 to-black p-10 rounded-3xl shadow-2xl text-white flex flex-col justify-between">
+            <div class="text-center mb-6">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Фактическая чистая прибыль</p>
+                <h4 class="text-5xl font-black text-green-400 mt-2 tracking-tighter">{{ '{:,.0f}'.format(profit).replace(',', ' ') }} тг</h4>
+            </div>
+            <div class="my-8 flex justify-center">
+                <div class="w-64 h-64 relative">
+                    <canvas id="statChart"></canvas>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span class="text-4xl font-black text-blue-400">{{ margin|round|int }}%</span>
+                        <span class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Рентабельность</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-800 bg-opacity-50 p-6 rounded-2xl border border-gray-700 mt-4">
+                <p class="text-xs text-gray-400 font-bold uppercase tracking-widest text-center mb-1">Сумма реализации клиенту</p>
+                <p class="text-3xl text-white font-black text-center">{{ '{:,.0f}'.format(total).replace(',', ' ') }} тг</p>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const ctx = document.getElementById('statChart').getContext('2d');
+        const profit = {{ profit }}; const cost = {{ total_cost }};
+        const displayProfit = profit < 0 ? 0 : profit; const colorProfit = profit < 0 ? '#ef4444' : '#10b981';
+        new Chart(ctx, {
+            type: 'doughnut', data: { labels: ['Себестоимость', 'Прибыль'], datasets: [{ data: [cost, displayProfit], backgroundColor: ['#374151', colorProfit], borderWidth: 0, hoverOffset: 10 }] },
+            options: { cutout: '80%', plugins: { legend: { display: false }, tooltip: { enabled: true } }, animation: { animateScale: true } }
+        });
+    });
+</script>
+{% endblock %}

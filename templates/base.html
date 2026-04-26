@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>ЧИНГИЗХАН ПРО | v2.1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+</head>
+<body class="bg-[#F8F9FA] flex h-screen font-sans">
+    <aside class="w-64 bg-[#1a1a1a] text-gray-300 flex flex-col shadow-xl z-50">
+        <div class="h-24 flex flex-col justify-center px-6 border-b border-gray-800 bg-[#111]">
+            <h1 class="text-2xl font-black tracking-tighter leading-tight">
+                <span style="color: #f97316;">ЧИНГИЗХАН</span><br>
+                <span style="color: #06b6d4;">ПРО</span>
+            </h1>
+            <p class="text-[9px] font-bold text-gray-500 mt-1 uppercase tracking-widest">Управление бизнесом v2.1</p>
+        </div>
+        <nav class="flex-1 px-4 py-6 space-y-6 overflow-y-auto">
+            <div>
+                <p class="text-xs font-bold text-gray-500 mb-3 px-2 tracking-wider">ГЛАВНОЕ</p>
+                <div class="space-y-1">
+                    <a href="/" class="flex items-center px-2 py-2.5 rounded-md hover:bg-gray-800 transition"><i class="fas fa-th-large w-6 text-center"></i><span class="ml-2 text-sm font-medium">Обзор</span></a>
+                    <a href="/catalog" class="flex items-center px-2 py-2.5 rounded-md hover:bg-gray-800 transition"><i class="fas fa-cubes w-6 text-center text-green-400"></i><span class="ml-2 text-sm font-medium text-white">Каталог МАФ</span></a>
+                    <a href="/proposals" class="flex items-center px-2 py-2.5 rounded-md hover:bg-gray-800 transition"><i class="fas fa-file-powerpoint w-6 text-center text-blue-400"></i><span class="ml-2 text-sm font-medium text-white">Журналы КП</span></a>
+                    <a href="/invoices" class="flex items-center px-2 py-2.5 rounded-md hover:bg-gray-800 transition"><i class="fas fa-file-invoice w-6 text-center"></i><span class="ml-2 text-sm font-medium">Счета</span></a>
+                    <a href="/create_invoice" class="flex items-center px-2 py-2.5 rounded-md hover:bg-gray-800 transition"><i class="fas fa-plus-circle w-6 text-center"></i><span class="ml-2 text-sm font-medium">Новый счёт</span></a>
+                </div>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-gray-500 mb-3 px-2 tracking-wider">КЛИЕНТЫ</p>
+                <div class="space-y-1">
+                    <a href="/clients" class="flex items-center px-2 py-2.5 hover:bg-gray-800 rounded-md transition"><i class="fas fa-users w-6 text-center"></i><span class="ml-2 text-sm font-medium">Заказчики</span></a>
+                    <a href="/issued_invoices" class="flex items-center px-2 py-2.5 hover:bg-gray-800 rounded-md transition"><i class="fas fa-chart-pie w-6 text-center"></i><span class="ml-2 text-sm font-medium">Статистика</span></a>
+                </div>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-gray-500 mb-3 px-2 tracking-wider">СИСТЕМА</p>
+                <div class="space-y-1">
+                    <a href="/categories" class="flex items-center px-2 py-2.5 hover:bg-gray-800 rounded-md transition"><i class="fas fa-tags w-6 text-center text-yellow-400"></i><span class="ml-2 text-sm font-medium">Категории МАФ</span></a>
+                    <a href="/knp" class="flex items-center px-2 py-2.5 hover:bg-gray-800 rounded-md transition"><i class="fas fa-list-ol w-6 text-center"></i><span class="ml-2 text-sm font-medium text-white">Справочник КНП</span></a>
+                    <a href="/settings" class="flex items-center px-2 py-2.5 hover:bg-gray-800 rounded-md transition"><i class="fas fa-cog w-6 text-center"></i><span class="ml-2 text-sm font-medium">Реквизиты</span></a>
+                </div>
+            </div>
+        </nav>
+    </aside>
+    <main class="flex-1 overflow-y-auto">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

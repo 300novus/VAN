@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="p-10 max-w-7xl mx-auto">
+    <div class="grid grid-cols-4 gap-6 mb-10">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><div class="text-gray-400 text-xs font-bold uppercase mb-2">Заказчиков</div><div class="text-3xl font-black text-gray-900">{{ clients }}</div></div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><div class="text-gray-400 text-xs font-bold uppercase mb-2">Всего счетов</div><div class="text-3xl font-black text-gray-900">{{ invoices }}</div></div>
+        <div class="bg-blue-500 p-6 rounded-2xl shadow-lg shadow-blue-200 text-white"><div class="opacity-80 text-xs font-bold uppercase mb-2">Ожидают оплаты</div><div class="text-3xl font-black">{{ pending }}</div></div>
+        <div class="bg-green-500 p-6 rounded-2xl shadow-lg shadow-green-200 text-white"><div class="opacity-80 text-xs font-bold uppercase mb-2">Оплачено</div><div class="text-3xl font-black">{{ paid }}</div></div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-8 mb-10">
+        <div class="col-span-2 bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+            <h3 class="text-xl font-black text-gray-900 mb-6">Финансовый обзор (Оплаченные)</h3>
+            <div class="grid grid-cols-2 gap-8">
+                <div class="space-y-6">
+                    <div><p class="text-gray-400 text-xs font-bold uppercase mb-1">Общая выручка</p><p class="text-3xl font-black text-gray-900">{{ '{:,.0f}'.format(fin_stats.revenue).replace(',', ' ') }} тг</p></div>
+                    <div><p class="text-gray-400 text-xs font-bold uppercase mb-1">Чистая прибыль</p><p class="text-3xl font-black text-green-600">{{ '{:,.0f}'.format(fin_stats.profit).replace(',', ' ') }} тг</p></div>
+                </div>
+                <div class="flex flex-col items-center justify-center border-l border-gray-100">
+                    <div class="relative w-40 h-40">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                            <path class="text-gray-100" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path class="text-green-500 transition-all duration-1000 ease-out" stroke-width="3" stroke-dasharray="{{ fin_stats.margin }}, 100" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span class="text-3xl font-black text-gray-900">{{ fin_stats.margin|round|int }}%</span>
+                            <span class="text-[10px] font-bold text-gray-400 uppercase">Рентаб.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="bg-[#1a1a1a] p-8 rounded-3xl shadow-xl text-white">
+            <h3 class="text-lg font-bold mb-6">Последние действия</h3>
+            <div class="space-y-4">
+                {% for r in recent %}
+                <div class="flex justify-between items-center border-b border-gray-800 pb-3">
+                    <div><p class="font-bold text-sm">{{ r[0] }}</p><p class="text-[10px] text-gray-500">{{ r[1] }}</p></div>
+                    <div class="text-right"><p class="font-bold text-sm text-blue-400">{{ '{:,.0f}'.format(r[3]).replace(',', ' ') }}</p><p class="text-[10px] text-gray-500">{{ r[2] }}</p></div>
+                </div>
+                {% endfor %}
+            </div>
+            <a href="/invoices" class="block text-center mt-6 text-xs font-bold text-gray-500 hover:text-white transition">Смотреть все счета →</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

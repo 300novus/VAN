@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="p-10 max-w-5xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+        <h2 class="text-3xl font-black text-gray-900 tracking-tight">Категории МАФ</h2>
+        <button onclick="openAddModal()" class="bg-black text-white px-6 py-2 rounded-xl font-bold hover:bg-gray-800 transition"><i class="fas fa-plus mr-2"></i> Новая категория</button>
+    </div>
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <table class="w-full text-left">
+            <thead>
+                <tr class="bg-gray-50 border-b font-bold text-gray-400 text-xs uppercase">
+                    <th class="py-4 px-6 w-16">ID</th><th class="py-4 px-6 w-16 text-center">Иконка</th><th class="py-4 px-6">Название</th><th class="py-4 px-6 text-right">Действия</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+                {% for c in categories %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="py-4 px-6 font-black text-gray-400">{{ c['id'] }}</td>
+                    <td class="py-4 px-6 text-center text-xl text-blue-500"><i class="fas {{ c['icon'] }}"></i></td>
+                    <td class="py-4 px-6 font-bold text-gray-900">{{ c['name'] }}</td>
+                    <td class="py-4 px-6 text-right space-x-2">
+                        <button onclick="openEditModal('{{ c['id'] }}', '{{ c['name'] }}', '{{ c['icon'] }}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 p-2 rounded-lg"><i class="fas fa-pen"></i></button>
+                        <button onclick="deleteCat('{{ c['id'] }}')" class="text-red-400 hover:text-red-600 bg-red-50 p-2 rounded-lg transition"><i class="fas fa-trash-alt"></i></button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="catModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center backdrop-blur-sm z-50">
+    <div class="bg-white p-8 rounded-3xl w-[600px] shadow-2xl max-h-[90vh] flex flex-col">
+        <h3 class="text-xl font-black mb-6" id="modalTitle">Новая категория</h3>
+        <form id="catForm" class="space-y-6 flex flex-col flex-1 overflow-hidden">
+            <input type="hidden" id="c_id">
+            <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Название</label><input id="c_name" required class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl font-bold outline-none"></div>
+            <div class="flex-1 overflow-hidden flex flex-col">
+                <label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Выберите иконку</label>
+                <div class="grid grid-cols-8 gap-2 p-4 bg-gray-50 border border-gray-200 rounded-xl overflow-y-auto" id="iconGrid"></div>
+            </div>
+            <div class="pt-4 flex gap-3 border-t border-gray-100">
+                <button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-700 font-bold py-3 rounded-xl">Отмена</button>
+                <button type="submit" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg" id="submitBtn">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const icons = ['fa-chair', 'fa-trash-alt', 'fa-lightbulb', 'fa-tree', 'fa-cube', 'fa-car', 'fa-bicycle', 'fa-bus', 'fa-campground', 'fa-monument', 'fa-palette', 'fa-tools', 'fa-hammer', 'fa-wrench', 'fa-paint-roller', 'fa-bolt', 'fa-water', 'fa-leaf', 'fa-seedling', 'fa-sun', 'fa-moon', 'fa-cloud', 'fa-star', 'fa-heart', 'fa-home', 'fa-building', 'fa-store', 'fa-warehouse', 'fa-road', 'fa-map-signs', 'fa-parking', 'fa-shield-alt', 'fa-fire', 'fa-tint', 'fa-anchor', 'fa-ship', 'fa-truck', 'fa-box', 'fa-archive', 'fa-camera', 'fa-video', 'fa-music', 'fa-microphone', 'fa-phone', 'fa-envelope', 'fa-user', 'fa-users', 'fa-graduation-cap', 'fa-book', 'fa-flag', 'fa-globe', 'fa-landmark', 'fa-city', 'fa-hospital', 'fa-school', 'fa-church', 'fa-faucet', 'fa-plug', 'fa-mountain', 'fa-umbrella'];
+    function renderIcons() { document.getElementById('iconGrid').innerHTML = icons.map(icon => `<label class="cursor-pointer text-center p-2 rounded hover:bg-white hover:shadow-sm transition group"><input type="radio" name="icon" value="${icon}" class="hidden"><i class="fas ${icon} text-2xl text-gray-400 group-hover:text-blue-500"></i></label>`).join(''); }
+    function openAddModal() { document.getElementById('modalTitle').innerText = 'Новая категория'; document.getElementById('submitBtn').innerText = 'Добавить'; document.getElementById('c_id').value = ''; document.getElementById('c_name').value = ''; document.getElementById('catModal').classList.remove('hidden'); document.getElementById('catModal').classList.add('flex'); renderIcons(); }
+    function openEditModal(id, name, icon) { document.getElementById('modalTitle').innerText = 'Изменить категорию'; document.getElementById('submitBtn').innerText = 'Сохранить'; document.getElementById('c_id').value = id; document.getElementById('c_name').value = name; document.getElementById('catModal').classList.remove('hidden'); document.getElementById('catModal').classList.add('flex'); renderIcons(); const radio = document.querySelector(`input[name="icon"][value="${icon}"]`); if(radio) radio.checked = true; }
+    function closeModal() { document.getElementById('catModal').classList.add('hidden'); document.getElementById('catModal').classList.remove('flex'); }
+    document.getElementById('catForm').onsubmit = (e) => { e.preventDefault(); const id = document.getElementById('c_id').value; const name = document.getElementById('c_name').value; const icon = document.querySelector('input[name="icon"]:checked')?.value || 'fa-cube'; const url = id ? '/api/edit_category' : '/api/add_category'; fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, name, icon }) }).then(() => window.location.reload()); }
+    function deleteCat(id) { if(confirm('Удалить категорию?')) { fetch(`/api/delete_category/${id}`, { method: 'POST' }).then(() => window.location.reload()); } }
+</script>
+<style>input[type="radio"]:checked + i { color: #3b82f6 !important; transform: scale(1.3); transition: 0.2s; }</style>
+{% endblock %}

@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="p-8 max-w-5xl mx-auto pb-32">
+    <form method="POST" enctype="multipart/form-data" class="space-y-6">
+        <div class="flex justify-between items-end mb-4">
+            <h2 class="text-3xl font-black text-gray-900 tracking-tight">Конструктор Журнала КП</h2>
+            <button type="submit" class="bg-black text-white px-10 py-3 rounded-2xl font-bold hover:bg-gray-800 transition shadow-xl">СОХРАНИТЬ ПРОЕКТ</button>
+        </div>
+        <div class="grid grid-cols-2 gap-6 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-8">
+            <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Заказчик</label><select name="client_id" id="clientSelect"><option value=""></option>{% for c in clients %}<option value="{{ c[0] }}">{{ c[1] }}</option>{% endfor %}</select></div>
+            <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Название проекта (Для вас)</label><input type="text" name="project_name" required class="w-full text-xl font-bold outline-none border-b border-gray-200 pb-2"></div>
+        </div>
+        <div id="blocksList" class="space-y-6"></div>
+        <div class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-white px-6 py-4 rounded-full shadow-2xl border border-gray-200 flex space-x-4 items-center z-40">
+            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest mr-4">Добавить блок:</span>
+            <button type="button" onclick="addCoverBlock()" class="bg-purple-50 text-purple-600 hover:bg-purple-100 px-4 py-2 rounded-xl font-bold text-sm transition"><i class="fas fa-image mr-1"></i> Обложка</button>
+            <button type="button" onclick="addTextBlock()" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-xl font-bold text-sm transition"><i class="fas fa-align-left mr-1"></i> Текст / Стиль</button>
+            <button type="button" onclick="openCatalogModal()" class="bg-green-500 text-white hover:bg-green-600 px-4 py-2 rounded-xl font-bold text-sm shadow-md transition"><i class="fas fa-cubes mr-1"></i> Из Каталога</button>
+            <button type="button" onclick="addManualProductBlock()" class="bg-gray-100 text-gray-600 hover:bg-gray-200 px-4 py-2 rounded-xl font-bold text-sm transition"><i class="fas fa-list mr-1"></i> Спецификация (Вручную)</button>
+        </div>
+    </form>
+</div>
+
+<div id="catalogModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center backdrop-blur-sm z-50">
+    <div class="bg-white p-8 rounded-3xl w-[700px] shadow-2xl max-h-[80vh] flex flex-col">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-black">Выберите изделие</h3>
+            <div class="flex space-x-2 overflow-x-auto mx-4 scrollbar-hide" id="modalCatFilters"></div>
+            <button type="button" onclick="closeCatalogModal()" class="text-gray-400 hover:text-gray-800 transition"><i class="fas fa-times text-2xl"></i></button>
+        </div>
+        <div id="catalogItemsList" class="flex-1 overflow-y-auto space-y-2 pr-2"></div>
+    </div>
+</div>
+
+<script>
+    let catalogData = [];
+    let categoriesData = [];
+    
+    document.addEventListener("DOMContentLoaded", function() { 
+        if(document.getElementById('clientSelect')) new TomSelect("#clientSelect", { create: false }); 
+        fetch('/api/get_categories_json').then(r=>r.json()).then(cats => {
+            categoriesData = cats;
+            renderCatFilters();
+            fetch('/api/get_catalog').then(r=>r.json()).then(data => { 
+                catalogData = data; 
+                renderModalCatalog(data); 
+            });
+        });
+    });
+
+    function renderCatFilters() {
+        let html = `<button class="bg-black text-white px-4 py-1.5 rounded-full text-xs font-bold transition whitespace-nowrap" onclick="filterModalCat('all', this)">Все</button>`;
+        categoriesData.forEach(cat => { html += `<button class="bg-gray-100 text-gray-600 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-gray-200 transition whitespace-nowrap" onclick="filterModalCat('${cat.id}', this)"><i class="fas ${cat.icon} text-gray-400 mr-1"></i>${cat.name}</button>`; });
+        document.getElementById('modalCatFilters').innerHTML = html;
+    }
+    
+    function filterModalCat(id, btn) {
+        document.getElementById('modalCatFilters').querySelectorAll('button').forEach(b => { b.classList.remove('bg-black', 'text-white'); b.classList.add('bg-gray-100', 'text-gray-600'); });
+        btn.classList.remove('bg-gray-100', 'text-gray-600'); btn.classList.add('bg-black', 'text-white');
+        if(id === 'all') renderModalCatalog(catalogData); else renderModalCatalog(catalogData.filter(i => String(i.cat_id) === String(id)));
+    }
+
+    function renderModalCatalog(items) {
+        let html = '';
+        items.forEach(item => {
+            let imgHtml = item.img1 && item.img1 !== 'None' ? `<img src="/static/uploads/${item.img1}" class="w-14 h-14 object-cover rounded-xl border border-gray-200">` : `<div class="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 border border-gray-200"><i class="fas fa-image"></i></div>`;
+            let catObj = categoriesData.find(c => String(c.id) === String(item.cat_id));
+            let catIconHtml = catObj ? `<i class="fas ${catObj.icon} text-gray-400 ml-2" title="${catObj.name}"></i>` : '';
+            html += `<div class="flex justify-between items-center bg-gray-50 p-3 rounded-2xl border border-gray-100 hover:border-blue-300 transition cursor-pointer" onclick="selectCatalogItem('${item.id}')">
+                <div class="flex items-center gap-4">${imgHtml}<div><div class="font-bold text-md text-gray-900">${item.name}${catIconHtml}</div><div class="text-xs text-gray-500 mt-1">${item.retail_price} тг / ${item.unit}</div></div></div>
+                <button type="button" class="bg-blue-100 text-blue-600 px-4 py-2 rounded-xl text-xs font-bold">Выбрать</button>
+            </div>`;
+        });
+        document.getElementById('catalogItemsList').innerHTML = html;
+    }
+    
+    function openCatalogModal() { document.getElementById('catalogModal').classList.remove('hidden'); document.getElementById('catalogModal').classList.add('flex'); }
+    function closeCatalogModal() { document.getElementById('catalogModal').classList.add('hidden'); document.getElementById('catalogModal').classList.remove('flex'); }
+
+    document.addEventListener('paste', function(e) { if(e.target.hasAttribute('contenteditable')) { e.preventDefault(); var text = (e.originalEvent || e).clipboardData.getData('text/plain'); document.execCommand('insertText', false, text); } });
+    function previewImageRow(input) { const p = input.nextElementSibling; if(input.files && input.files[0]) { const r = new FileReader(); r.onload = function(e){ p.src=e.target.result; p.classList.remove('hidden'); }; r.readAsDataURL(input.files[0]); } }
+    function clearImage(inputId, previewId, hiddenId) { document.getElementById(inputId).value=''; const p=document.getElementById(previewId); p.src='#'; p.classList.add('hidden'); if(document.getElementById(hiddenId)) document.getElementById(hiddenId).value=''; updateLiveCover(document.getElementById(inputId).closest('.block-row'));}
+    function execCmd(command) { document.execCommand(command, false, null); }
+    function updateRichText(div) { document.getElementById('text_' + div.dataset.id).value = div.innerHTML; }
+    function moveUp(btn) { const row = btn.closest('.block-row'); if(row.previousElementSibling) row.parentNode.insertBefore(row, row.previousElementSibling); }
+    function moveDown(btn) { const row = btn.closest('.block-row'); if(row.nextElementSibling) row.parentNode.insertBefore(row.nextElementSibling, row); }
+
+    function updateLiveCover(row) {
+        if(!row || !row.querySelector('input[value="cover"]')) return;
+        const id = row.querySelector('input[name="block_ids[]"]').value;
+        const angle = row.querySelector(`[name="cov_angle_${id}"]`).value;
+        const gap = row.querySelector(`[name="cov_gap_${id}"]`).value;
+        const grad = row.querySelector(`[name="cov_grad_${id}"]`).value;
+        const color = row.querySelector(`[name="cov_color_${id}"]`).value;
+        const shadow = row.querySelector(`[name="cov_shadow_${id}"]`).checked;
+        const topText = row.querySelector(`[name="cov_top_${id}"]`).value;
+        const title = row.querySelector(`[name="title_${id}"]`).value;
+        const sub = row.querySelector(`[name="subtitle_${id}"]`).value;
+        const preview = document.getElementById(`live_preview_${id}`);
+        preview.style.gap = gap + 'px';
+        let imgs = [];
+        for(let i=1; i<=3; i++) {
+            let src = row.querySelector(`[name="img${i}_${id}"]`).nextElementSibling.src;
+            let hidden = document.getElementById(`old${i}_${id}`);
+            if(src && src !== '' && !src.endsWith('#')) imgs.push(src);
+            else if(hidden && hidden.value) imgs.push('/static/uploads/' + hidden.value);
+        }
+        let html = '';
+        if(imgs.length === 3) {
+            html += `<div style="flex:1; height:100%; background:url('${imgs[0]}') center/cover; clip-path: polygon(0 0, 100% 0, calc(100% - ${angle}%) 100%, 0 100%);"></div><div style="flex:1; height:100%; background:url('${imgs[1]}') center/cover; clip-path: polygon(${angle}% 0, 100% 0, calc(100% - ${angle}%) 100%, 0 100%); margin-left: -${angle}%;"></div><div style="flex:1; height:100%; background:url('${imgs[2]}') center/cover; clip-path: polygon(${angle}% 0, 100% 0, 100% 100%, 0 100%); margin-left: -${angle}%;"></div>`;
+        } else if(imgs.length === 2) {
+            html += `<div style="flex:1; height:100%; background:url('${imgs[0]}') center/cover; clip-path: polygon(0 0, 100% 0, calc(100% - ${angle}%) 100%, 0 100%);"></div><div style="flex:1; height:100%; background:url('${imgs[1]}') center/cover; clip-path: polygon(${angle}% 0, 100% 0, 100% 100%, 0 100%); margin-left: -${angle}%;"></div>`;
+        } else if(imgs.length === 1) {
+            html += `<div style="width:100%; height:100%; background:url('${imgs[0]}') center/cover;"></div>`;
+        } else {
+            html += `<div style="width:100%; height:100%; background:#e5e7eb; display:flex; align-items:center; justify-content:center; color:#9ca3af; font-size:10px;">Нет фото</div>`;
+        }
+        if(grad > 0) html += `<div style="position: absolute; bottom:0; left:0; width:100%; height:80%; background: linear-gradient(to top, rgba(0,0,0,${grad/100}), transparent); pointer-events: none;"></div>`;
+        const txtShadow = shadow ? 'text-shadow: 0 2px 10px rgba(0,0,0,0.8);' : '';
+        html += `<div style="position:absolute; top:10px; left:15px; color:${color}; ${txtShadow} font-size:8px; font-weight:bold; letter-spacing:1px; z-index:10;">${topText}</div><div style="position:absolute; bottom:15px; left:15px; color:${color}; ${txtShadow} z-index:10;"><h2 style="font-size:16px; margin:0; font-weight:900; line-height:1.1; text-transform:uppercase;">${title || 'ЗАГОЛОВОК'}</h2><p style="font-size:10px; margin:0;">${sub}</p></div>`;
+        preview.innerHTML = html;
+    }
+
+    function updateLiveText(row) {
+        if(!row) return;
+        const id = row.querySelector('input[name="block_ids[]"]').value;
+        const bg = row.querySelector(`[name="txt_bg_${id}"]`).value;
+        const col = row.querySelector(`[name="txt_color_${id}"]`).value;
+        const bc = row.querySelector(`[name="txt_bc_${id}"]`).value;
+        const bw = row.querySelector(`[name="txt_bw_${id}"]`).value;
+        const previewDiv = row.querySelector('.text-live-preview');
+        previewDiv.style.backgroundColor = bg; previewDiv.style.color = col; previewDiv.style.borderLeft = `${bw}px solid ${bc}`;
+    }
+
+    function selectCatalogItem(itemId) {
+        const item = catalogData.find(i => String(i.id) === String(itemId)); closeCatalogModal(); const id = Date.now();
+        const retailPrice = item.retail_price || item.cost; const cost = item.cost || 0;
+        let i1Html = item.img1 && item.img1 !== 'None' ? `<img src="/static/uploads/${item.img1}" class="w-full h-20 object-cover rounded-xl border border-gray-200"><input type="hidden" name="cat_img1_${id}" value="${item.img1}">` : `<div class="w-full h-20 bg-gray-100 flex items-center justify-center rounded-xl border border-gray-200 text-gray-400"><i class="fas fa-image"></i></div><input type="hidden" name="cat_img1_${id}" value="">`;
+        let i2Html = item.img2 && item.img2 !== 'None' ? `<img src="/static/uploads/${item.img2}" class="w-full h-20 object-cover rounded-xl border border-gray-200"><input type="hidden" name="cat_img2_${id}" value="${item.img2}">` : `<div class="w-full h-20 bg-gray-100 flex items-center justify-center rounded-xl border border-gray-200 text-gray-400"><i class="fas fa-image"></i></div><input type="hidden" name="cat_img2_${id}" value="">`;
+        let i3Html = item.img3 && item.img3 !== 'None' ? `<img src="/static/uploads/${item.img3}" class="w-full h-20 object-cover rounded-xl border border-gray-200"><input type="hidden" name="cat_img3_${id}" value="${item.img3}">` : `<div class="w-full h-20 bg-gray-100 flex items-center justify-center rounded-xl border border-gray-200 text-gray-400"><i class="fas fa-image"></i></div><input type="hidden" name="cat_img3_${id}" value="">`;
+        const html = `
+            <div class="block-row bg-white p-6 rounded-3xl shadow-sm border-2 border-green-100 relative group transition-all">
+                <input type="hidden" name="block_ids[]" value="${id}"><input type="hidden" name="b_type_${id}" value="product"><input type="hidden" name="cost_${id}" value="${cost}">
+                <div class="absolute -left-12 top-1/2 transform -translate-y-1/2 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition"><button type="button" onclick="moveUp(this)" class="bg-gray-800 text-white p-2 rounded-full shadow"><i class="fas fa-arrow-up"></i></button><button type="button" onclick="moveDown(this)" class="bg-gray-800 text-white p-2 rounded-full shadow"><i class="fas fa-arrow-down"></i></button><button type="button" onclick="this.closest('.block-row').remove()" class="bg-red-500 text-white p-2 rounded-full shadow mt-4"><i class="fas fa-trash"></i></button></div>
+                <div class="flex items-center mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-[10px] font-black uppercase"><i class="fas fa-cubes mr-1"></i> МАФ (Каталог)</span><span class="ml-auto text-xs font-bold text-green-600">✓ Пойдет в счет с себестоимостью</span></div>
+                <div class="mb-4 pb-4 border-b border-gray-100"><div class="flex gap-4"><div class="w-1/3">${i1Html}</div><div class="w-1/3">${i2Html}</div><div class="w-1/3">${i3Html}</div></div></div>
+                <div class="grid grid-cols-12 gap-4">
+                    <div class="col-span-6"><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Спецификация</label><input type="text" name="title_${id}" value="${item.name}" required class="w-full bg-gray-50 p-3 rounded-xl font-bold outline-none"></div>
+                    <div class="col-span-2"><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Ед.</label><input type="text" name="unit_${id}" value="${item.unit}" required class="w-full bg-gray-50 p-3 rounded-xl text-center font-bold outline-none"></div>
+                    <div class="col-span-2"><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Кол-во</label><input type="number" name="qty_${id}" value="1" step="0.01" class="w-full bg-gray-50 p-3 rounded-xl text-center font-black text-blue-600 outline-none"></div>
+                    <div class="col-span-2"><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Цена (тг)</label><input type="number" name="price_${id}" value="${retailPrice}" step="0.01" required class="w-full bg-gray-50 p-3 rounded-xl text-right font-black outline-none"></div>
+                </div>
+            </div>`;
+        document.getElementById('blocksList').insertAdjacentHTML('beforeend', html);
+    }
+
+    function addCoverBlock() {
+        const id = Date.now();
+        const html = `
+            <div class="block-row bg-white p-6 rounded-3xl shadow-sm border-2 border-purple-100 relative group transition-all" oninput="updateLiveCover(this)">
+                <input type="hidden" name="block_ids[]" value="${id}"><input type="hidden" name="b_type_${id}" value="cover">
+                <div class="absolute -left-12 top-1/2 transform -translate-y-1/2 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition"><button type="button" onclick="moveUp(this)" class="bg-gray-800 text-white p-2 rounded-full shadow hover:bg-black"><i class="fas fa-arrow-up"></i></button><button type="button" onclick="moveDown(this)" class="bg-gray-800 text-white p-2 rounded-full shadow hover:bg-black"><i class="fas fa-arrow-down"></i></button><button type="button" onclick="this.closest('.block-row').remove()" class="bg-red-500 text-white p-2 rounded-full shadow hover:bg-red-600 mt-4"><i class="fas fa-trash"></i></button></div>
+                <div class="flex items-center mb-4"><span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-[10px] font-black uppercase"><i class="fas fa-image mr-1"></i> Обложка (Диагональный коллаж)</span></div>
+                <div class="grid grid-cols-12 gap-6">
+                    <div class="col-span-6 space-y-4">
+                        <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Верхний мелкий текст</label><input type="text" name="cov_top_${id}" value="2026 / ПРЕЗЕНТАЦИЯ ПРОЕКТА" class="w-full text-xs font-bold outline-none border-b border-gray-200 pb-2"></div>
+                        <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Крупный Заголовок поверх фото</label><input type="text" name="title_${id}" required class="w-full text-2xl font-black outline-none border-b border-gray-200 pb-2"></div>
+                        <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Мелкий подзаголовок</label><input type="text" name="subtitle_${id}" class="w-full text-md font-bold outline-none border-b border-gray-200 pb-2 text-gray-500"></div>
+                    </div>
+                    <div class="col-span-3 bg-gray-50 p-4 rounded-xl space-y-4 border border-gray-200">
+                        <label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Настройки визуала</label>
+                        <div><label class="block text-[10px] font-bold text-gray-500 mb-1">Угол среза</label><input type="range" name="cov_angle_${id}" min="0" max="30" value="10" class="w-full"></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 mb-1">Разделитель (px)</label><input type="range" name="cov_gap_${id}" min="0" max="20" value="5" class="w-full"></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 mb-1">Затемнение (0-100%)</label><input type="range" name="cov_grad_${id}" min="0" max="100" value="70" class="w-full"></div>
+                        <div class="flex gap-4 items-center"><div><label class="block text-[10px] font-bold text-gray-500 mb-1">Цвет текста</label><input type="color" name="cov_color_${id}" value="#ffffff" class="w-8 h-8 rounded border-none cursor-pointer"></div><div class="flex items-center mt-4"><input type="checkbox" name="cov_shadow_${id}" checked value="on" class="mr-1"><span class="text-[10px] font-bold text-gray-500">Тень</span></div></div>
+                    </div>
+                    <div class="col-span-3"><label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Live-Превью</label><div id="live_preview_${id}" class="w-full h-48 rounded-xl bg-gray-100 overflow-hidden relative flex border border-gray-200 shadow-inner"></div></div>
+                </div>
+                <div class="mt-6 border-t border-purple-100 pt-4">
+                    <label class="block text-[10px] font-black text-purple-500 uppercase mb-2">Фотографии (Добавьте 1, 2 или 3)</label>
+                    <div class="flex gap-4">
+                        <div class="w-1/3 relative"><input type="file" name="img1_${id}" id="in1_${id}" accept="image/*" onchange="previewImageRow(this); updateLiveCover(this.closest('.block-row'))" class="text-xs file:bg-purple-50 w-full mb-1"><img src="#" id="pr1_${id}" class="hidden w-full h-20 object-cover rounded-lg border border-gray-200"><button type="button" onclick="clearImage('in1_${id}', 'pr1_${id}')" class="absolute top-8 right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs hover:bg-red-600"><i class="fas fa-trash"></i></button></div>
+                        <div class="w-1/3 relative"><input type="file" name="img2_${id}" id="in2_${id}" accept="image/*" onchange="previewImageRow(this); updateLiveCover(this.closest('.block-row'))" class="text-xs file:bg-purple-50 w-full mb-1"><img src="#" id="pr2_${id}" class="hidden w-full h-20 object-cover rounded-lg border border-gray-200"><button type="button" onclick="clearImage('in2_${id}', 'pr2_${id}')" class="absolute top-8 right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs hover:bg-red-600"><i class="fas fa-trash"></i></button></div>
+                        <div class="w-1/3 relative"><input type="file" name="img3_${id}" id="in3_${id}" accept="image/*" onchange="previewImageRow(this); updateLiveCover(this.closest('.block-row'))" class="text-xs file:bg-purple-50 w-full mb-1"><img src="#" id="pr3_${id}" class="hidden w-full h-20 object-cover rounded-lg border border-gray-200"><button type="button" onclick="clearImage('in3_${id}', 'pr3_${id}')" class="absolute top-8 right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs hover:bg-red-600"><i class="fas fa-trash"></i></button></div>
+                    </div>
+                </div>
+            </div>`;
+        document.getElementById('blocksList').insertAdjacentHTML('beforeend', html);
+        updateLiveCover(document.getElementById('blocksList').lastElementChild);
+    }
+
+    function addTextBlock() {
+        const id = Date.now();
+        const html = `
+            <div class="block-row bg-white p-6 rounded-3xl shadow-sm border-2 border-blue-100 relative group transition-all" oninput="updateLiveText(this)">
+                <input type="hidden" name="block_ids[]" value="${id}"><input type="hidden" name="b_type_${id}" value="text">
+                <div class="absolute -left-12 top-1/2 transform -translate-y-1/2 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition"><button type="button" onclick="moveUp(this)" class="bg-gray-800 text-white p-2 rounded-full shadow"><i class="fas fa-arrow-up"></i></button><button type="button" onclick="moveDown(this)" class="bg-gray-800 text-white p-2 rounded-full shadow"><i class="fas fa-arrow-down"></i></button><button type="button" onclick="this.closest('.block-row').remove()" class="bg-red-500 text-white p-2 rounded-full shadow mt-4"><i class="fas fa-trash"></i></button></div>
+                <div class="flex justify-between items-center mb-4">
+                    <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black uppercase"><i class="fas fa-align-left mr-1"></i> Текст / Стиль</span>
+                    <div class="flex space-x-4 bg-gray-50 px-4 py-2 rounded-xl border border-gray-200 items-center">
+                        <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500">Фон</span><input type="color" name="txt_bg_${id}" value="#f9fafb" class="w-6 h-6 rounded border-none cursor-pointer"></div>
+                        <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500">Текст</span><input type="color" name="txt_color_${id}" value="#333333" class="w-6 h-6 rounded border-none cursor-pointer"></div>
+                        <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500">Рамка</span><input type="color" name="txt_bc_${id}" value="#2563eb" class="w-6 h-6 rounded border-none cursor-pointer"></div>
+                        <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500">Толщина (px)</span><input type="number" name="txt_bw_${id}" value="4" min="0" max="20" class="w-12 h-6 text-xs text-center border rounded outline-none"></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-4 gap-6">
+                    <div class="col-span-3">
+                        <div class="mb-2 flex items-center bg-gray-50 p-1.5 rounded-lg border border-gray-200 w-max">
+                            <button type="button" onclick="execCmd('bold')" class="font-bold w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded text-sm shadow-sm mr-1">Ж</button><button type="button" onclick="execCmd('italic')" class="italic w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded text-sm shadow-sm mr-1">К</button><button type="button" onclick="execCmd('underline')" class="underline w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded text-sm shadow-sm mr-2">Ч</button><div class="w-px h-6 bg-gray-300 mx-1"></div><button type="button" onclick="execCmd('justifyLeft')" class="w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded text-sm shadow-sm text-gray-600 ml-2 mr-1"><i class="fas fa-align-left"></i></button><button type="button" onclick="execCmd('justifyCenter')" class="w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded text-sm shadow-sm text-gray-600 mr-1"><i class="fas fa-align-center"></i></button><button type="button" onclick="execCmd('justifyRight')" class="w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded text-sm shadow-sm text-gray-600 mr-2"><i class="fas fa-align-right"></i></button><div class="w-px h-6 bg-gray-300 mx-1"></div><button type="button" onclick="execCmd('removeFormat')" class="w-8 h-8 flex items-center justify-center bg-white hover:bg-red-50 rounded text-sm shadow-sm text-red-500 ml-2" title="Сбросить стили"><i class="fas fa-eraser"></i></button>
+                        </div>
+                        <div contenteditable="true" data-id="${id}" class="text-live-preview w-full min-h-[120px] p-4 rounded-xl outline-none transition-all" style="background:#f9fafb; color:#333; border-left:4px solid #2563eb;" onkeyup="updateRichText(this)">Введите текст...</div>
+                        <input type="hidden" name="text_${id}" id="text_${id}">
+                    </div>
+                    <div class="col-span-1 border-l border-gray-100 pl-6 space-y-3">
+                        <label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Картинки (до 3шт)</label>
+                        <div class="relative"><input type="file" name="img1_${id}" id="in1_t_${id}" accept="image/*" onchange="previewImageRow(this)" class="text-xs file:bg-blue-50 w-full mb-1"><img src="#" id="pr1_t_${id}" class="hidden w-full aspect-square object-cover rounded-lg border border-gray-200"><button type="button" onclick="clearImage('in1_t_${id}', 'pr1_t_${id}')" class="absolute top-8 right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs hover:bg-red-600"><i class="fas fa-trash"></i></button></div>
+                        <div class="relative"><input type="file" name="img2_${id}" id="in2_t_${id}" accept="image/*" onchange="previewImageRow(this)" class="text-xs file:bg-blue-50 w-full mb-1"><img src="#" id="pr2_t_${id}" class="hidden w-full aspect-square object-cover rounded-lg border border-gray-200"><button type="button" onclick="clearImage('in2_t_${id}', 'pr2_t_${id}')" class="absolute top-8 right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs hover:bg-red-600"><i class="fas fa-trash"></i></button></div>
+                        <div class="relative"><input type="file" name="img3_${id}" id="in3_t_${id}" accept="image/*" onchange="previewImageRow(this)" class="text-xs file:bg-blue-50 w-full mb-1"><img src="#" id="pr3_t_${id}" class="hidden w-full aspect-square object-cover rounded-lg border border-gray-200"><button type="button" onclick="clearImage('in3_t_${id}', 'pr3_t_${id}')" class="absolute top-8 right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs hover:bg-red-600"><i class="fas fa-trash"></i></button></div>
+                    </div>
+                </div>
+            </div>`;
+        document.getElementById('blocksList').insertAdjacentHTML('beforeend', html);
+    }
+
+    function addManualProductBlock() {
+        const id = Date.now();
+        const html = `
+            <div class="block-row bg-white p-6 rounded-3xl shadow-sm border-2 border-gray-200 relative group transition-all">
+                <input type="hidden" name="block_ids[]" value="${id}"><input type="hidden" name="b_type_${id}" value="manual_product">
+                <div class="absolute -left-12 top-1/2 transform -translate-y-1/2 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition"><button type="button" onclick="moveUp(this)" class="bg-gray-800 text-white p-2 rounded-full shadow"><i class="fas fa-arrow-up"></i></button><button type="button" onclick="moveDown(this)" class="bg-gray-800 text-white p-2 rounded-full shadow"><i class="fas fa-arrow-down"></i></button><button type="button" onclick="this.closest('.block-row').remove()" class="bg-red-500 text-white p-2 rounded-full shadow mt-4"><i class="fas fa-trash"></i></button></div>
+                <div class="flex items-center mb-4"><span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-[10px] font-black uppercase"><i class="fas fa-list mr-1"></i> Спецификация (Вручную)</span><span class="ml-auto text-xs font-bold text-green-600">✓ Пойдет в счет</span></div>
+                <div class="mb-6 pb-4 border-b border-gray-100">
+                    <label class="block text-[10px] font-black text-gray-500 uppercase mb-3">Фотографии (до 3 шт.)</label>
+                    <div class="flex gap-4">
+                        <div class="w-1/3 relative"><input type="file" name="img1_${id}" id="in1_m_${id}" onchange="previewImageRow(this)" class="text-xs file:bg-gray-50 w-full mb-1"><img src="#" id="pr1_m_${id}" class="hidden w-full h-20 object-cover rounded-xl border border-gray-200"><button type="button" onclick="clearImage('in1_m_${id}', 'pr1_m_${id}')" class="absolute top-8 right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs hover:bg-red-600"><i class="fas fa-trash"></i></button></div>
+                        <div class="w-1/3 relative"><input type="file" name="img2_${id}" id="in2_m_${id}" onchange="previewImageRow(this)" class="text-xs file:bg-gray-50 w-full mb-1"><img src="#" id="pr2_m_${id}" class="hidden w-full h-20 object-cover rounded-xl border border-gray-200"><button type="button" onclick="clearImage('in2_m_${id}', 'pr2_m_${id}')" class="absolute top-8 right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs hover:bg-red-600"><i class="fas fa-trash"></i></button></div>
+                        <div class="w-1/3 relative"><input type="file" name="img3_${id}" id="in3_m_${id}" onchange="previewImageRow(this)" class="text-xs file:bg-gray-50 w-full mb-1"><img src="#" id="pr3_m_${id}" class="hidden w-full h-20 object-cover rounded-xl border border-gray-200"><button type="button" onclick="clearImage('in3_m_${id}', 'pr3_m_${id}')" class="absolute top-8 right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs hover:bg-red-600"><i class="fas fa-trash"></i></button></div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <label class="block text-[10px] font-black text-gray-500 uppercase mb-3">Состав работ / изделий</label>
+                    <div id="man_rows_${id}" class="space-y-2">
+                        <div class="grid grid-cols-12 gap-4 man-row">
+                            <div class="col-span-5"><input type="text" name="man_title_${id}[]" placeholder="Наименование" required class="w-full bg-white p-2 rounded-lg font-bold outline-none border border-gray-200 text-sm"></div>
+                            <div class="col-span-2"><input type="text" name="man_unit_${id}[]" value="шт." required class="w-full bg-white p-2 rounded-lg text-center font-bold outline-none border border-gray-200 text-sm"></div>
+                            <div class="col-span-2"><input type="number" name="man_qty_${id}[]" value="1" step="0.01" required class="w-full bg-white p-2 rounded-lg text-center font-black text-blue-600 outline-none border border-gray-200 text-sm"></div>
+                            <div class="col-span-2"><input type="number" name="man_price_${id}[]" placeholder="Цена" step="0.01" required class="w-full bg-white p-2 rounded-lg text-right font-black outline-none border border-gray-200 text-sm"></div>
+                            <div class="col-span-1 flex items-center justify-center"><button type="button" onclick="this.closest('.man-row').remove()" class="text-red-400 hover:text-red-600"><i class="fas fa-times"></i></button></div>
+                        </div>
+                    </div>
+                    <button type="button" onclick="addManualRow('${id}')" class="mt-4 text-xs font-bold text-blue-600 hover:underline"><i class="fas fa-plus"></i> Добавить строку</button>
+                </div>
+            </div>`;
+        document.getElementById('blocksList').insertAdjacentHTML('beforeend', html);
+    }
+    
+    function addManualRow(bid) {
+        const html = `
+            <div class="grid grid-cols-12 gap-4 mt-2 man-row">
+                <div class="col-span-5"><input type="text" name="man_title_${bid}[]" placeholder="Наименование" required class="w-full bg-white p-2 rounded-lg font-bold outline-none border border-gray-200 text-sm"></div>
+                <div class="col-span-2"><input type="text" name="man_unit_${bid}[]" value="шт." required class="w-full bg-white p-2 rounded-lg text-center font-bold outline-none border border-gray-200 text-sm"></div>
+                <div class="col-span-2"><input type="number" name="man_qty_${bid}[]" value="1" step="0.01" required class="w-full bg-white p-2 rounded-lg text-center font-black text-blue-600 outline-none border border-gray-200 text-sm"></div>
+                <div class="col-span-2"><input type="number" name="man_price_${bid}[]" placeholder="Цена" step="0.01" required class="w-full bg-white p-2 rounded-lg text-right font-black outline-none border border-gray-200 text-sm"></div>
+                <div class="col-span-1 flex items-center justify-center"><button type="button" onclick="this.closest('.man-row').remove()" class="text-red-400 hover:text-red-600"><i class="fas fa-times"></i></button></div>
+            </div>`;
+        document.getElementById(`man_rows_${bid}`).insertAdjacentHTML('beforeend', html);
+    }
+</script>
+{% endblock %}
