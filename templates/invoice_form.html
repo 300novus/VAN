@@ -12,11 +12,29 @@
         <div class="col-span-8 space-y-6">
             <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
                 <div class="grid grid-cols-4 gap-6 mb-6">
-                    <div class="col-span-2"><label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Заказчик</label><select name="client_id" id="clientSelect" required><option value=""></option>{% for c in clients %}<option value="{{ c[0] }}" {% if current_client == c[0] %}selected{% endif %}>{{ c[1] }}</option>{% endfor %}</select></div>
-                    <div class="col-span-1"><label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Год (2 цифры)</label><input type="text" name="year" value="{{ year if year else '26' }}" required class="w-full bg-gray-50 border border-gray-200 p-2.5 rounded-xl font-bold outline-none text-center"></div>
-                    <div class="col-span-1"><label class="block text-[10px] font-black text-gray-400 uppercase mb-2">№ Счета</label><input type="number" name="doc_num" placeholder="1" value="{{ doc_num if doc_num else '' }}" required class="w-full bg-gray-50 border border-gray-200 p-2.5 rounded-xl font-bold outline-none text-center border-red-300 bg-red-50 focus:border-blue-400 focus:bg-white transition-colors"></div>
+                    <div class="col-span-2 min-w-0">
+                        <label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Заказчик</label>
+                        <select name="client_id" id="clientSelect" required class="w-full bg-gray-50 border border-gray-200 p-2.5 rounded-xl font-bold text-sm outline-none focus:border-blue-400 truncate">
+                            <option value=""></option>
+                            {% for c in clients %}<option value="{{ c[0] }}" {% if current_client == c[0] %}selected{% endif %}>{{ c[1] }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-span-1 min-w-0">
+                        <label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Год (2 цифры)</label>
+                        <input type="text" name="year" value="{{ year if year else '26' }}" required class="w-full bg-gray-50 border border-gray-200 p-2.5 rounded-xl font-bold outline-none text-center">
+                    </div>
+                    <div class="col-span-1 min-w-0">
+                        <label class="block text-[10px] font-black text-gray-400 uppercase mb-2">№ Счета</label>
+                        <input type="number" name="doc_num" placeholder="1" value="{{ doc_num if doc_num else '' }}" required class="w-full bg-gray-50 border border-red-300 bg-red-50 p-2.5 rounded-xl font-bold outline-none text-center focus:border-blue-400 focus:bg-white transition-colors">
+                    </div>
                 </div>
-                <div class="mb-6"><label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Код КНП</label><select name="knp" id="knpSelect">{% for k in knp_list %}<option value="{{ k[0] }}" {% if k[0] == current_knp or (not current_knp and k[0] == '859') %}selected{% endif %}>{{ k[0] }} - {{ k[1] }}</option>{% endfor %}</select></div>
+                
+                <div class="mb-6 min-w-0">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Код КНП</label>
+                    <select name="knp" id="knpSelect" class="w-full bg-gray-50 border border-gray-200 p-2.5 rounded-xl font-bold text-sm outline-none focus:border-blue-400 truncate">
+                        {% for k in knp_list %}<option value="{{ k[0] }}" {% if k[0] == current_knp or (not current_knp and k[0] == '859') %}selected{% endif %}>{{ k[0] }} - {{ k[1] }}</option>{% endfor %}
+                    </select>
+                </div>
                 
                 <div id="itemsContainer" class="space-y-4 border-t border-gray-50 pt-6">
                     {% if form_items %}
@@ -46,15 +64,15 @@
         </div>
         
         <div class="col-span-4 space-y-6">
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
                 <h3 class="font-black text-gray-900 mb-4">Себестоимость</h3>
                 <div id="costsContainer" class="space-y-3">
                     {% if form_costs %}
                         {% for cost in form_costs %}
-                        <div class="cost-row flex gap-2 items-center bg-gray-50 p-2 rounded-xl border border-gray-100 animate-fade-in">
-                            <input type="text" name="cost_label[]" value="{{ cost.label }}" placeholder="Назначение" required class="flex-1 bg-white border border-gray-200 p-2.5 rounded-xl text-sm font-bold outline-none">
-                            <input type="number" step="0.01" name="cost_value[]" value="{{ cost.value }}" placeholder="Сумма" required class="cost-input w-28 bg-white border border-gray-200 p-2.5 rounded-xl text-sm text-right font-black text-red-500 outline-none" oninput="calculate()">
-                            <button type="button" onclick="this.closest('.cost-row').remove(); calculate();" class="text-gray-400 hover:text-red-500 w-8"><i class="fas fa-times"></i></button>
+                        <div class="cost-row flex gap-2 items-center bg-gray-50 p-2 rounded-xl border border-gray-100 animate-fade-in w-full">
+                            <input type="text" name="cost_label[]" value="{{ cost.label }}" placeholder="Назначение" required class="flex-1 min-w-0 bg-white border border-gray-200 p-2.5 rounded-xl text-sm font-bold outline-none">
+                            <input type="number" step="0.01" name="cost_value[]" value="{{ cost.value }}" placeholder="Сумма" required class="cost-input w-24 flex-shrink-0 bg-white border border-gray-200 p-2.5 rounded-xl text-sm text-right font-black text-red-500 outline-none" oninput="calculate()">
+                            <button type="button" onclick="this.closest('.cost-row').remove(); calculate();" class="text-gray-400 hover:text-red-500 w-8 flex-shrink-0"><i class="fas fa-times"></i></button>
                         </div>
                         {% endfor %}
                     {% endif %}
@@ -93,26 +111,17 @@
     let catalogData = [];
     let categoriesData = [];
     
-document.addEventListener("DOMContentLoaded", function() { 
-        // 1. Безопасный запуск выпадающих списков (с предохранителем)
+    document.addEventListener("DOMContentLoaded", function() { 
         try {
             if(document.getElementById('clientSelect')) new TomSelect("#clientSelect", { create: false }); 
             if(document.getElementById('knpSelect')) new TomSelect("#knpSelect", { create: false });
-        } catch(e) {
-            console.warn('Режим бункера: красивые списки отключены, продолжаем загрузку.');
-        }
+        } catch(e) { console.warn('Списки работают в стандартном режиме'); }
 
-        // 2. Загрузка категорий и каталога (ОБЯЗАТЕЛЬНО ОСТАВЛЯЕМ)
         fetch('/api/get_categories_json').then(r=>r.json()).then(cats => {
             categoriesData = cats;
             renderCatFilters();
-            fetch('/api/get_catalog').then(r=>r.json()).then(data => { 
-                catalogData = data; 
-                renderModalCatalog(data); 
-            });
+            fetch('/api/get_catalog').then(r=>r.json()).then(data => { catalogData = data; renderModalCatalog(data); });
         });
-
-        // 3. Запуск расчетов (ОБЯЗАТЕЛЬНО ОСТАВЛЯЕМ)
         if(document.querySelectorAll('.item-row').length === 0) addRow(); else calculate();
     });
 
@@ -175,7 +184,8 @@ document.addEventListener("DOMContentLoaded", function() {
     function removeRow(btn) { btn.closest('.item-row').remove(); calculate(); }
     
     function addCostRow(label='', value='') {
-        const html = `<div class="cost-row flex gap-2 items-center bg-gray-50 p-2 rounded-xl border border-gray-100 animate-fade-in"><input type="text" name="cost_label[]" value="${label}" placeholder="Назначение" required class="flex-1 bg-white border border-gray-200 p-2.5 rounded-xl text-sm font-bold outline-none"><input type="number" step="0.01" name="cost_value[]" value="${value}" placeholder="Сумма" required class="cost-input w-28 bg-white border border-gray-200 p-2.5 rounded-xl text-sm text-right font-black text-red-500 outline-none" oninput="calculate()"><button type="button" onclick="this.closest('.cost-row').remove(); calculate();" class="text-gray-400 hover:text-red-500 w-8"><i class="fas fa-times"></i></button></div>`;
+        // ИСПРАВЛЕНО: min-w-0 и flex-shrink-0 в JavaScript генераторе
+        const html = `<div class="cost-row flex gap-2 items-center bg-gray-50 p-2 rounded-xl border border-gray-100 animate-fade-in w-full"><input type="text" name="cost_label[]" value="${label}" placeholder="Назначение" required class="flex-1 min-w-0 bg-white border border-gray-200 p-2.5 rounded-xl text-sm font-bold outline-none"><input type="number" step="0.01" name="cost_value[]" value="${value}" placeholder="Сумма" required class="cost-input w-24 flex-shrink-0 bg-white border border-gray-200 p-2.5 rounded-xl text-sm text-right font-black text-red-500 outline-none" oninput="calculate()"><button type="button" onclick="this.closest('.cost-row').remove(); calculate();" class="text-gray-400 hover:text-red-500 w-8 flex-shrink-0"><i class="fas fa-times"></i></button></div>`;
         document.getElementById('costsContainer').insertAdjacentHTML('beforeend', html); calculate();
     }
 
