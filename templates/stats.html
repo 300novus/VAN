@@ -1,60 +1,120 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="p-10 max-w-5xl mx-auto">
-    <div class="flex justify-between items-center mb-8">
-        <h2 class="text-3xl font-black text-gray-900">Аналитика счета №{{ inv_id }}</h2>
-        <a href="/invoices" class="bg-black text-white px-6 py-2 rounded-xl font-bold hover:bg-gray-800">Назад к счетам</a>
+<div class="p-10 max-w-7xl mx-auto pb-20">
+    <div class="flex justify-between items-end mb-8">
+        <div>
+            <h2 class="text-3xl font-black text-gray-900 tracking-tight">Финансовая аналитика</h2>
+            <p class="text-gray-400 font-bold text-sm uppercase tracking-widest mt-1">Счёт № {{ inv_id }}</p>
+        </div>
+        <a href="/invoices" class="bg-gray-100 text-gray-700 px-6 py-2.5 rounded-xl font-bold hover:bg-gray-200 transition"><i class="fas fa-arrow-left mr-2"></i> К списку</a>
     </div>
-    <div class="grid grid-cols-2 gap-8">
-        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-            <h3 class="text-[10px] font-black text-gray-400 uppercase mb-6 tracking-widest">Структура себестоимости</h3>
-            <div class="space-y-4">
-                {% if costs %}
-                    {% for label, val in costs %}
-                    <div class="flex justify-between items-center border-b border-gray-50 pb-3">
-                        <span class="font-bold text-gray-700 text-lg">{{ label }}</span>
-                        <span class="font-black text-gray-900 text-xl">{{ '{:,.0f}'.format(val).replace(',', ' ') }} тг</span>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="text-center py-10 text-gray-400 font-bold">Данные о себестоимости не были заполнены при создании счета.</div>
-                {% endif %}
-                <div class="flex justify-between items-center pt-6 text-gray-400 font-black">
-                    <span class="uppercase tracking-widest text-xs">ИТОГО РАСХОДОВ:</span>
-                    <span class="text-2xl text-gray-800">{{ '{:,.0f}'.format(total_cost).replace(',', ' ') }} тг</span>
+
+    <div class="grid grid-cols-4 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+            <div class="text-gray-400 text-[10px] font-black uppercase mb-2">Выручка (Итого)</div>
+            <div class="text-2xl font-black text-gray-900">{{ '{:,.0f}'.format(total).replace(',', ' ') }} <span class="text-sm opacity-50 text-gray-500">тг</span></div>
+        </div>
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+            <div class="text-red-400 text-[10px] font-black uppercase mb-2">Все расходы</div>
+            <div class="text-2xl font-black text-red-500">{{ '{:,.0f}'.format(total_cost).replace(',', ' ') }} <span class="text-sm opacity-50">тг</span></div>
+        </div>
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+            <div class="text-green-500 text-[10px] font-black uppercase mb-2">Чистая прибыль</div>
+            <div class="text-2xl font-black text-green-500">{{ '{:,.0f}'.format(profit).replace(',', ' ') }} <span class="text-sm opacity-50">тг</span></div>
+        </div>
+        <div class="bg-[#1a1a1a] p-6 rounded-3xl shadow-lg flex items-center justify-between">
+            <div>
+                <div class="text-gray-400 text-[10px] font-black uppercase mb-1">Рентабельность</div>
+                <div class="text-2xl font-black {% if margin > 30 %}text-green-400{% elif margin > 15 %}text-yellow-400{% else %}text-red-400{% endif %}">
+                    {{ '{:.1f}'.format(margin) }}%
                 </div>
+            </div>
+            <div class="w-12 h-12">
+                <svg viewBox="0 0 36 36" class="w-full h-full transform -rotate-90" style="overflow: visible;">
+                    <path class="text-gray-800" stroke-width="4" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path class="{% if margin > 30 %}text-green-400{% elif margin > 15 %}text-yellow-400{% else %}text-red-400{% endif %}" 
+                          stroke-width="4" stroke-dasharray="{{ margin if margin > 0 else 0 }}, 100" 
+                          stroke-linecap="round" stroke="currentColor" fill="none" 
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
             </div>
         </div>
-        <div class="bg-gradient-to-br from-gray-900 to-black p-10 rounded-3xl shadow-2xl text-white flex flex-col justify-between">
-            <div class="text-center mb-6">
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Фактическая чистая прибыль</p>
-                <h4 class="text-5xl font-black text-green-400 mt-2 tracking-tighter">{{ '{:,.0f}'.format(profit).replace(',', ' ') }} тг</h4>
-            </div>
-            <div class="my-8 flex justify-center">
-                <div class="w-64 h-64 relative">
-                    <canvas id="statChart"></canvas>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center">
-                        <span class="text-4xl font-black text-blue-400">{{ margin|round|int }}%</span>
-                        <span class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Рентабельность</span>
-                    </div>
+    </div>
+
+    <div class="grid grid-cols-12 gap-8">
+        <div class="col-span-7 bg-white p-10 rounded-3xl shadow-sm border border-gray-100 flex flex-col items-center">
+            <h3 class="font-black text-gray-900 mb-8 text-lg w-full">Структура финансов</h3>
+            
+            <div class="relative w-64 h-64">
+                <svg viewBox="0 0 36 36" class="w-full h-full transform -rotate-90" style="overflow: visible;">
+                    <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#f3f4f6" stroke-width="5"></circle>
+                    
+                    {% set ns = namespace(offset=0) %}
+                    {% set colors = ['#EF4444', '#F59E0B', '#F97316', '#EC4899', '#8B5CF6'] %}
+                    
+                    {% set p_pct = (profit / total * 100) if total > 0 else 0 %}
+                    {% if p_pct > 0 %}
+                        <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#10B981" stroke-width="5" 
+                                stroke-dasharray="{{ p_pct }} 100" stroke-dashoffset="0"
+                                class="transition-all duration-500 cursor-pointer hover:stroke-[7]"
+                                onmousemove="showTip(event, 'Прибыль', '{{ '{:,.0f}'.format(profit) }} тг', '#10B981')" onmouseout="hideTip()"></circle>
+                        {% set ns.offset = p_pct %}
+                    {% endif %}
+
+                    {% for c in costs %}
+                        {% set c_val = c[1] if c[1] else 0 %}
+                        {% set c_pct = (c_val / total * 100) if total > 0 else 0 %}
+                        {% if c_pct > 0 %}
+                            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="{{ colors[loop.index0 % 5] }}" stroke-width="5" 
+                                    stroke-dasharray="{{ c_pct }} 100" stroke-dashoffset="-{{ ns.offset }}"
+                                    class="transition-all duration-500 cursor-pointer hover:stroke-[7]"
+                                    onmousemove="showTip(event, '{{ c[0] }}', '{{ '{:,.0f}'.format(c_val) }} тг', '{{ colors[loop.index0 % 5] }}')" onmouseout="hideTip()"></circle>
+                            {% set ns.offset = ns.offset + c_pct %}
+                        {% endif %}
+                    {% endfor %}
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+                    <div class="text-[10px] text-gray-400 font-bold uppercase">Итого Счет</div>
+                    <div class="text-xl font-black">{{ '{:,.0f}'.format(total).replace(',', ' ') }}</div>
                 </div>
             </div>
-            <div class="bg-gray-800 bg-opacity-50 p-6 rounded-2xl border border-gray-700 mt-4">
-                <p class="text-xs text-gray-400 font-bold uppercase tracking-widest text-center mb-1">Сумма реализации клиенту</p>
-                <p class="text-3xl text-white font-black text-center">{{ '{:,.0f}'.format(total).replace(',', ' ') }} тг</p>
+
+            <div class="w-full flex flex-wrap gap-4 mt-10 justify-center">
+                <div class="flex items-center text-[10px] font-black text-gray-500 uppercase tracking-widest"><span class="w-2 h-2 rounded-full bg-[#10B981] mr-2"></span>Прибыль</div>
+                {% for c in costs %}
+                <div class="flex items-center text-[10px] font-black text-gray-500 uppercase tracking-widest"><span class="w-2 h-2 rounded-full mr-2" style="background-color: {{ colors[loop.index0 % 5] }};"></span>{{ c[0] }}</div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="col-span-5 bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+            <h3 class="font-black text-gray-900 mb-6 text-lg">Детализация себестоимости</h3>
+            <div class="space-y-4">
+                {% for c in costs %}
+                <div class="flex justify-between items-center border-b border-gray-50 pb-3">
+                    <div class="text-sm font-bold text-gray-700 truncate mr-4"><i class="fas fa-circle text-[8px] text-red-400 mr-2"></i>{{ c[0] }}</div>
+                    <div class="text-sm font-black text-gray-900 whitespace-nowrap">{{ '{:,.0f}'.format(c[1] if c[1] else 0).replace(',', ' ') }} тг</div>
+                </div>
+                {% endfor %}
+                <div class="flex justify-between items-center pt-2">
+                    <div class="text-sm font-bold text-green-600">Чистая прибыль</div>
+                    <div class="text-sm font-black text-green-600">{{ '{:,.0f}'.format(profit).replace(',', ' ') }} тг</div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<div id="nativeTooltip" class="fixed hidden bg-gray-900 text-white px-3 py-2 rounded-lg text-xs font-bold pointer-events-none z-50 shadow-xl border border-gray-700"></div>
+
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const ctx = document.getElementById('statChart').getContext('2d');
-        const profit = {{ profit }}; const cost = {{ total_cost }};
-        const displayProfit = profit < 0 ? 0 : profit; const colorProfit = profit < 0 ? '#ef4444' : '#10b981';
-        new Chart(ctx, {
-            type: 'doughnut', data: { labels: ['Себестоимость', 'Прибыль'], datasets: [{ data: [cost, displayProfit], backgroundColor: ['#374151', colorProfit], borderWidth: 0, hoverOffset: 10 }] },
-            options: { cutout: '80%', plugins: { legend: { display: false }, tooltip: { enabled: true } }, animation: { animateScale: true } }
-        });
-    });
+    function showTip(e, t, v, c) {
+        const tip = document.getElementById('nativeTooltip');
+        tip.style.display = 'block';
+        tip.style.left = (e.clientX + 10) + 'px';
+        tip.style.top = (e.clientY + 10) + 'px';
+        tip.innerHTML = `<div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:${c}"></div><span class="opacity-60 text-[10px] uppercase">${t}:</span> ${v}</div>`;
+    }
+    function hideTip() { document.getElementById('nativeTooltip').style.display = 'none'; }
 </script>
 {% endblock %}
