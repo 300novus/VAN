@@ -92,34 +92,8 @@ document.addEventListener("DOMContentLoaded", function() {
     function closeCatalogModal() { document.getElementById('catalogModal').classList.add('hidden'); document.getElementById('catalogModal').classList.remove('flex'); }
 
     document.addEventListener('paste', function(e) { if(e.target.hasAttribute('contenteditable')) { e.preventDefault(); var text = (e.originalEvent || e).clipboardData.getData('text/plain'); document.execCommand('insertText', false, text); } });
-    function previewImageRow(input) { 
-    const p = input.nextElementSibling; 
-    if(input.files && input.files[0]) { 
-        const r = new FileReader(); 
-        r.onload = function(e){ 
-            p.src=e.target.result; 
-            p.classList.remove('hidden'); 
-            const btn = p.parentElement.querySelector('button');
-            if(btn) { btn.classList.remove('hidden'); btn.style.display = 'flex'; }
-        }; 
-        r.readAsDataURL(input.files[0]); 
-    } 
-}
-    function clearImage(inputId, previewId, hiddenId) { 
-    if(document.getElementById(inputId)) document.getElementById(inputId).value=''; 
-    const p=document.getElementById(previewId); 
-    if(p) {
-        p.src='#'; 
-        p.classList.add('hidden'); 
-        const btn = p.parentElement.querySelector('button');
-        if(btn) { btn.classList.add('hidden'); btn.style.display = 'none'; }
-    }
-    if(hiddenId && document.getElementById(hiddenId)) document.getElementById(hiddenId).value=''; 
-    if(document.getElementById(inputId)) {
-        const row = document.getElementById(inputId).closest('.block-row');
-        if(row && typeof updateLiveCover === 'function') updateLiveCover(row);
-    }
-}
+    function previewImageRow(input) { const p = input.nextElementSibling; if(input.files && input.files[0]) { const r = new FileReader(); r.onload = function(e){ p.src=e.target.result; p.classList.remove('hidden'); }; r.readAsDataURL(input.files[0]); } }
+    function clearImage(inputId, previewId, hiddenId) { document.getElementById(inputId).value=''; const p=document.getElementById(previewId); p.src='#'; p.classList.add('hidden'); if(document.getElementById(hiddenId)) document.getElementById(hiddenId).value=''; updateLiveCover(document.getElementById(inputId).closest('.block-row'));}
     function execCmd(command) { document.execCommand(command, false, null); }
     function updateRichText(div) { document.getElementById('text_' + div.dataset.id).value = div.innerHTML; }
     function moveUp(btn) { const row = btn.closest('.block-row'); if(row.previousElementSibling) row.parentNode.insertBefore(row, row.previousElementSibling); }
@@ -317,65 +291,5 @@ document.addEventListener("DOMContentLoaded", function() {
             </div>`;
         document.getElementById(`man_rows_${bid}`).insertAdjacentHTML('beforeend', html);
     }
-
-// --- INJECTED UI UPGRADE FOR FILE INPUTS ---
-function upgradeFileInputs() {
-    document.querySelectorAll('input[type="file"]').forEach(inp => {
-        if(inp.dataset.upgraded) return;
-        inp.dataset.upgraded = 'true';
-        
-        const wrapper = inp.closest('.relative');
-        if(!wrapper || wrapper.classList.contains('no-upgrade')) return;
-        
-        // Стилизуем обертку (делаем красивую рамку)
-        wrapper.classList.add('h-24', 'border-2', 'border-dashed', 'border-gray-300', 'rounded-2xl', 'flex', 'items-center', 'justify-center', 'bg-gray-50', 'hover:bg-gray-100', 'transition', 'overflow-hidden', 'group', 'w-full');
-        
-        // Прячем стандартный инпут, но оставляем его кликабельным поверх всего
-        inp.className = 'absolute inset-0 opacity-0 cursor-pointer z-10 w-full h-full';
-        
-        // Добавляем красивую иконку облака и текст "Загрузить"
-        const uiBg = document.createElement('div');
-        uiBg.className = 'absolute inset-0 flex flex-col items-center justify-center text-gray-400 group-hover:text-blue-500 pointer-events-none transition z-0';
-        uiBg.innerHTML = '<i class="fas fa-cloud-upload-alt text-2xl mb-1"></i><span class="text-[9px] font-black uppercase tracking-widest">Загрузить</span>';
-        wrapper.appendChild(uiBg);
-        
-        // Стилизуем саму картинку, когда она загрузится
-        const img = inp.nextElementSibling;
-        if(img && img.tagName === 'IMG') {
-            img.classList.remove('h-20', 'aspect-square', 'border', 'border-gray-200', 'rounded-lg', 'rounded-xl');
-            img.classList.add('absolute', 'inset-0', 'w-full', 'h-full', 'object-cover', 'z-20', 'pointer-events-none', 'bg-white');
-        }
-        
-        // Стилизуем кнопку удаления (делаем ее современной)
-        const btn = wrapper.querySelector('button');
-        if(btn) {
-            btn.classList.remove('top-8', 'w-6', 'h-6', 'rounded-full', 'text-xs');
-            btn.classList.add('top-2', 'right-2', 'w-8', 'h-8', 'rounded-xl', 'shadow-lg', 'flex', 'items-center', 'justify-center', 'z-30', 'hover:scale-110', 'bg-red-500', 'hover:bg-red-600', 'text-white', 'transition');
-            
-            // Синхронизируем видимость кнопки с картинкой
-            if(img && img.classList.contains('hidden')) {
-                btn.classList.add('hidden');
-                btn.style.display = 'none';
-            } else {
-                btn.classList.remove('hidden');
-                btn.style.display = 'flex';
-            }
-        }
-    });
-}
-
-// Автоматически применяем стили ко всем новым блокам, которые ты добавляешь
-const observer = new MutationObserver(mutations => {
-    mutations.forEach(mutation => {
-        if(mutation.addedNodes.length) upgradeFileInputs();
-    });
-});
-const blocksList = document.getElementById('blocksList');
-if(blocksList) observer.observe(blocksList, { childList: true, subtree: true });
-
-// Запускаем при загрузке страницы
-document.addEventListener('DOMContentLoaded', upgradeFileInputs);
-// ------------------------------------------
-
 </script>
 {% endblock %}
