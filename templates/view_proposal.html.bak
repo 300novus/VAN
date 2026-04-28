@@ -88,9 +88,8 @@
                     </div>
                 </div>
                 {% elif b[0] == 'text' %}
-                {% set s_txt = json.loads(b[9]) if b[9] and '{' in b[9] else {'bg': '#f9fafb', 'color': '#333333', 'bc': '#2563eb', 'bw': '4', 'b_style': 'left', 'b_rad': '0'} %}
-                {% set border_css = 'border: ' ~ s_txt.bw ~ 'px solid ' ~ s_txt.bc if s_txt.b_style == 'all' else 'border: ' ~ s_txt.bw ~ 'px double ' ~ s_txt.bc if s_txt.b_style == 'double' else 'border-right: ' ~ s_txt.bw ~ 'px solid ' ~ s_txt.bc if s_txt.b_style == 'right' else 'border-top: ' ~ s_txt.bw ~ 'px solid ' ~ s_txt.bc if s_txt.b_style == 'top' else 'border-bottom: ' ~ s_txt.bw ~ 'px solid ' ~ s_txt.bc if s_txt.b_style == 'bottom' else 'border-left: ' ~ s_txt.bw ~ 'px solid ' ~ s_txt.bc %}
-                <div class="block-text" style="background-color: {{ s_txt.bg }}; color: {{ s_txt.color }}; {{ border_css }}; border-radius: {{ s_txt.b_rad|default(0) }}px;">
+                {% set s_txt = json.loads(b[9]) if b[9] and '{' in b[9] else {'bg': '#f9fafb', 'color': '#333333', 'bc': '#2563eb', 'bw': '4'} %}
+                <div class="block-text" style="background-color: {{ s_txt.bg }}; color: {{ s_txt.color }}; border-left: {{ s_txt.bw }}px solid {{ s_txt.bc }};">
                     <div class="block-text-content">{{ b[2]|safe }}</div>
                     {% if (b[6] and b[6] != 'None') or (b[7] and b[7] != 'None') or (b[8] and b[8] != 'None') %}
                     <div class="block-text-img">

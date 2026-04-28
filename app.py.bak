@@ -226,7 +226,7 @@ def create_proposal():
                 elif b_type == 'text':
                     text = request.form.get(f'text_{bid}')
                     i1, i2, i3 = save_file(request.files.get(f'img1_{bid}'), f"{prop_id}_t1_{bid}"), save_file(request.files.get(f'img2_{bid}'), f"{prop_id}_t2_{bid}"), save_file(request.files.get(f'img3_{bid}'), f"{prop_id}_t3_{bid}")
-                    s_json = json.dumps({'bg': request.form.get(f'txt_bg_{bid}'), 'color': request.form.get(f'txt_color_{bid}'), 'bc': request.form.get(f'txt_bc_{bid}'), 'bw': request.form.get(f'txt_bw_{bid}'), 'b_style': request.form.get(f'txt_bstyle_{bid}', 'left'), 'b_rad': request.form.get(f'txt_brad_{bid}', 0)}, ensure_ascii=False)
+                    s_json = json.dumps({'bg': request.form.get(f'txt_bg_{bid}'), 'color': request.form.get(f'txt_color_{bid}'), 'bc': request.form.get(f'txt_bc_{bid}'), 'bw': request.form.get(f'txt_bw_{bid}')}, ensure_ascii=False)
                     c.execute("INSERT INTO proposal_blocks (proposal_id, block_type, sort_order, text_content, img1, img2, img3, items_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (prop_id, b_type, order, text, i1, i2, i3, s_json))
                 elif b_type == 'product':
                     title, unit = request.form.get(f'title_{bid}'), request.form.get(f'unit_{bid}')
@@ -296,7 +296,7 @@ def edit_proposal(prop_id):
                 if b_type == 'cover':
                     items_json = json.dumps({'angle': request.form.get(f'cov_angle_{bid}', 10), 'gap': request.form.get(f'cov_gap_{bid}', 5), 'grad': request.form.get(f'cov_grad_{bid}', 70), 'color': request.form.get(f'cov_color_{bid}', '#ffffff'), 'shadow': request.form.get(f'cov_shadow_{bid}', 'on'), 'top_text': request.form.get(f'cov_top_{bid}', '')})
                 elif b_type == 'text':
-                    items_json = json.dumps({'bg': request.form.get(f'txt_bg_{bid}', '#f9fafb'), 'color': request.form.get(f'txt_color_{bid}', '#333333'), 'bc': request.form.get(f'txt_bc_{bid}', '#2563eb'), 'bw': request.form.get(f'txt_bw_{bid}', 4), 'b_style': request.form.get(f'txt_bstyle_{bid}', 'left'), 'b_rad': request.form.get(f'txt_brad_{bid}', 0)})
+                    items_json = json.dumps({'bg': request.form.get(f'txt_bg_{bid}', '#f9fafb'), 'color': request.form.get(f'txt_color_{bid}', '#333333'), 'bc': request.form.get(f'txt_bc_{bid}', '#2563eb'), 'bw': request.form.get(f'txt_bw_{bid}', 4)})
                 elif b_type == 'manual_product':
                     man_titles = request.form.getlist(f'man_title_{bid}[]')
                     man_units = request.form.getlist(f'man_unit_{bid}[]')

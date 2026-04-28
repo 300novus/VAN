@@ -59,7 +59,7 @@
                 <script>document.addEventListener("DOMContentLoaded", function() { updateLiveCover(document.querySelector('[name="block_ids[]"][value="{{ id }}"]').closest('.block-row')); });</script>
                 
                 {% elif b[1] == 'text' %}
-                {% set s_txt = json.loads(b[10]) if b[10] and '{' in b[10] else {'bg': '#f9fafb', 'color': '#333333', 'bc': '#2563eb', 'bw': '4', 'b_style': 'left', 'b_rad': '0'} %}
+                {% set s_txt = json.loads(b[10]) if b[10] and '{' in b[10] else {'bg': '#f9fafb', 'color': '#333333', 'bc': '#2563eb', 'bw': '4'} %}
                 <div class="block-row bg-white p-6 rounded-3xl shadow-sm border-2 border-blue-100 relative group transition-all" oninput="updateLiveText(this)">
                     <input type="hidden" name="block_ids[]" value="{{ id }}"><input type="hidden" name="b_type_{{ id }}" value="text">
                     <div class="absolute -left-12 top-1/2 transform -translate-y-1/2 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition"><button type="button" onclick="moveUp(this)" class="bg-gray-800 text-white p-2 rounded-full shadow"><i class="fas fa-arrow-up"></i></button><button type="button" onclick="moveDown(this)" class="bg-gray-800 text-white p-2 rounded-full shadow"><i class="fas fa-arrow-down"></i></button><button type="button" onclick="this.closest('.block-row').remove()" class="bg-red-500 text-white p-2 rounded-full shadow mt-4"><i class="fas fa-trash"></i></button></div>
@@ -69,7 +69,7 @@
                             <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500">Фон</span><input type="color" name="txt_bg_{{ id }}" value="{{ s_txt.bg }}" class="w-6 h-6 rounded border-none cursor-pointer"></div>
                             <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500">Текст</span><input type="color" name="txt_color_{{ id }}" value="{{ s_txt.color }}" class="w-6 h-6 rounded border-none cursor-pointer"></div>
                             <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500">Рамка</span><input type="color" name="txt_bc_{{ id }}" value="{{ s_txt.bc }}" class="w-6 h-6 rounded border-none cursor-pointer"></div>
-                            <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500">Толщина</span><input type="number" name="txt_bw_{{ id }}" value="{{ s_txt.bw }}" min="0" max="20" class="w-12 h-6 text-xs text-center border rounded outline-none"></div><div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500">Рамка</span><select name="txt_bstyle_{{ id }}" onchange="updateLiveText(this.closest('.block-row'))" class="h-6 text-xs border rounded outline-none bg-white"><option value="left" {% if s_txt.b_style == "left" %}selected{% endif %}>Слева</option><option value="all" {% if s_txt.b_style == "all" %}selected{% endif %}>Полная</option><option value="double" {% if s_txt.b_style == "double" %}selected{% endif %}>Двойная</option><option value="right" {% if s_txt.b_style == "right" %}selected{% endif %}>Справа</option><option value="top" {% if s_txt.b_style == "top" %}selected{% endif %}>Сверху</option><option value="bottom" {% if s_txt.b_style == "bottom" %}selected{% endif %}>Снизу</option></select></div><div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500">Скругление</span><input type="range" name="txt_brad_{{ id }}" value="{{ s_txt.b_rad|default(0) }}" min="0" max="50" oninput="updateLiveText(this.closest('.block-row'))" class="w-16"></div>
+                            <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500">Толщина (px)</span><input type="number" name="txt_bw_{{ id }}" value="{{ s_txt.bw }}" min="0" max="20" class="w-12 h-6 text-xs text-center border rounded outline-none"></div>
                         </div>
                     </div>
                     <div class="grid grid-cols-4 gap-6">
@@ -77,8 +77,7 @@
                             <div class="mb-2 flex items-center bg-gray-50 p-1.5 rounded-lg border border-gray-200 w-max">
                                 <button type="button" onclick="execCmd('bold')" class="font-bold w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded text-sm shadow-sm mr-1">Ж</button><button type="button" onclick="execCmd('italic')" class="italic w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded text-sm shadow-sm mr-1">К</button><button type="button" onclick="execCmd('underline')" class="underline w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded text-sm shadow-sm mr-2">Ч</button><div class="w-px h-6 bg-gray-300 mx-1"></div><button type="button" onclick="execCmd('justifyLeft')" class="w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded text-sm shadow-sm text-gray-600 ml-2 mr-1"><i class="fas fa-align-left"></i></button><button type="button" onclick="execCmd('justifyCenter')" class="w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded text-sm shadow-sm text-gray-600 mr-1"><i class="fas fa-align-center"></i></button><button type="button" onclick="execCmd('justifyRight')" class="w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded text-sm shadow-sm text-gray-600 mr-2"><i class="fas fa-align-right"></i></button><div class="w-px h-6 bg-gray-300 mx-1"></div><button type="button" onclick="execCmd('removeFormat')" class="w-8 h-8 flex items-center justify-center bg-white hover:bg-red-50 rounded text-sm shadow-sm text-red-500 ml-2" title="Сбросить стили"><i class="fas fa-eraser"></i></button>
                             </div>
-                            <div contenteditable="true" data-id="{{ id }}" class="text-live-preview w-full min-h-[120px] p-4 rounded-xl outline-none transition-all" {% set border_css = 'border: ' ~ s_txt.bw ~ 'px solid ' ~ s_txt.bc if s_txt.b_style == 'all' else 'border: ' ~ s_txt.bw ~ 'px double ' ~ s_txt.bc if s_txt.b_style == 'double' else 'border-right: ' ~ s_txt.bw ~ 'px solid ' ~ s_txt.bc if s_txt.b_style == 'right' else 'border-top: ' ~ s_txt.bw ~ 'px solid ' ~ s_txt.bc if s_txt.b_style == 'top' else 'border-bottom: ' ~ s_txt.bw ~ 'px solid ' ~ s_txt.bc if s_txt.b_style == 'bottom' else 'border-left: ' ~ s_txt.bw ~ 'px solid ' ~ s_txt.bc %}
-                            style="background-color:{{ s_txt.bg }}; color:{{ s_txt.color }}; {{ border_css }}; border-radius:{{ s_txt.b_rad|default(0) }}px;" onkeyup="updateRichText(this)">{{ b[3]|safe }}</div>
+                            <div contenteditable="true" data-id="{{ id }}" class="text-live-preview w-full min-h-[120px] p-4 rounded-xl outline-none transition-all" style="background-color:{{ s_txt.bg }}; color:{{ s_txt.color }}; border-left:{{ s_txt.bw }}px solid {{ s_txt.bc }};" onkeyup="updateRichText(this)">{{ b[3]|safe }}</div>
                             <input type="hidden" name="text_{{ id }}" id="text_{{ id }}" value="{{ b[3] }}">
                         </div>
                         <div class="col-span-1 border-l border-gray-100 pl-6 space-y-3">
@@ -294,18 +293,9 @@ document.addEventListener("DOMContentLoaded", function() {
         const bc = row.querySelector(`[name="txt_bc_${id}"]`).value;
         const bw = row.querySelector(`[name="txt_bw_${id}"]`).value;
         const previewDiv = row.querySelector('.text-live-preview');
-        const bStyle = row.querySelector(`[name="txt_bstyle_${id}"]`) ? row.querySelector(`[name="txt_bstyle_${id}"]`).value : 'left';
-        const bRad = row.querySelector(`[name="txt_brad_${id}"]`) ? row.querySelector(`[name="txt_brad_${id}"]`).value : 0;
         previewDiv.style.backgroundColor = bg;
         previewDiv.style.color = col;
-        previewDiv.style.border = 'none';
-        previewDiv.style.borderRadius = `${bRad}px`;
-        if (bStyle === 'all') previewDiv.style.border = `${bw}px solid ${bc}`;
-        else if (bStyle === 'double') previewDiv.style.border = `${bw}px double ${bc}`;
-        else if (bStyle === 'left') previewDiv.style.borderLeft = `${bw}px solid ${bc}`;
-        else if (bStyle === 'right') previewDiv.style.borderRight = `${bw}px solid ${bc}`;
-        else if (bStyle === 'top') previewDiv.style.borderTop = `${bw}px solid ${bc}`;
-        else if (bStyle === 'bottom') previewDiv.style.borderBottom = `${bw}px solid ${bc}`;
+        previewDiv.style.borderLeft = `${bw}px solid ${bc}`;
     }
 
     function selectCatalogItem(itemId) {
