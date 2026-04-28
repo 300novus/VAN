@@ -565,4 +565,16 @@ def client_invoices(client_id):
         invs = c.execute("SELECT i.id, c.name, i.date, i.total, i.status FROM invoices i LEFT JOIN clients c ON i.client_id = c.id WHERE i.client_id = ? ORDER BY i.date DESC", (client_id,)).fetchall()
     return render_template('invoices.html', invoices=invs, title=f"Счета: {name}", current_client=client_id)
 
+
+@app.route('/api/get_local_icons')
+def get_local_icons():
+    # Используем абсолютный путь для надежности
+    folder = os.path.join(app.static_folder, 'category_icons')
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+    
+    # Получаем список файлов и фильтруем только картинки
+    icons = [f for f in os.listdir(folder) if f.lower().endswith(('.png', '.svg', '.jpg', '.webp'))]
+    return jsonify(icons)
+
 if __name__ == '__main__': app.run(debug=True)
