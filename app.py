@@ -6,14 +6,17 @@ import shutil
 import json
 from datetime import datetime
 
-# --- AI MODULE IMPORTS ---
 import google.generativeai as genai
 import PIL.Image
 import io
 
-# Настройка ключа нейросети
-genai.configure(api_key='AIzaSyCZOHmxDMUDeeWfD0G9YqM8Esg7mAb1ahw')
-# -------------------------
+# Читаем ключ из спрятанного файла
+try:
+    with open('api_key.txt', 'r', encoding='utf-8') as f:
+        API_KEY = f.read().strip()
+    genai.configure(api_key=API_KEY)
+except FileNotFoundError:
+    print("ВНИМАНИЕ: Файл api_key.txt не найден! ИИ работать не будет.")
 
 
 app = Flask(__name__)
@@ -290,13 +293,21 @@ def edit_proposal(prop_id):
                 if b_type == 'product':
                     total += float(qty) * float(price)
                 
-                # Сохраняем картинки
+# Сохраняем картинки (ИСПРАВЛЕНО ДЛЯ КАТАЛОГА)
                 def save_img(idx):
+                    # 1. Если загружен новый файл руками
                     f = request.files.get(f'img{idx}_{bid}')
                     if f and f.filename:
-                        fn = f"pr_{prop_id}_{bid}_{idx}.png"
+                        fn = f"pr_{prop_id}_{bid}_{idx}_{int(time.time()*1000)}.png"
                         f.save(os.path.join(app.config['UPLOAD_FOLDER'], fn))
                         return fn
+                    
+                    # 2. Если блок добавлен из каталога (копируем фото каталога)
+                    cat_img = request.form.get(f'cat_img{idx}_{bid}')
+                    if cat_img:
+                        return copy_file(cat_img, f"pr_{prop_id}_{bid}_cat{idx}")
+                        
+                    # 3. Если ничего не меняли, сохраняем старое фото
                     return request.form.get(f'old_img{idx}_{bid}', '')
                 
                 i1, i2, i3 = save_img(1), save_img(2), save_img(3)
