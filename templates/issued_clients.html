@@ -1,33 +1,36 @@
 {% extends "base.html" %}
+
 {% block content %}
 <div class="p-10 max-w-7xl mx-auto">
+    <!-- Заголовок страницы -->
     <div class="mb-8">
         <h2 class="text-3xl font-black text-gray-900 tracking-tight">Ценность клиентов</h2>
-        <p class="text-gray-500 mt-2">Выберите заказчика для просмотра истории счетов и аналитики.</p>
+        <p class="text-gray-500 mt-2 text-sm">Выберите заказчика для просмотра истории счетов и аналитики.</p>
     </div>
     
+    <!-- Сетка карточек клиентов -->
     <div class="grid grid-cols-2 gap-6">
         {% for c in clients %}
-        <a href="/client_invoices/{{ c['id'] }}" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg hover:border-gray-300 transition group flex flex-col justify-between">
-            <div class="flex justify-between items-start mb-4">
+        <a href="/client_invoices/{{ c['id'] }}" class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-200 transition group flex flex-col justify-between">
+            <div class="flex justify-between items-start mb-6">
                 <div>
-                    <h3 class="font-bold text-gray-900 text-xl group-hover:text-blue-600">{{ c['name'] }}</h3>
-                    <p class="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">ID: {{ c['id'] }}</p>
+                    <h3 class="font-bold text-gray-900 text-xl group-hover:text-blue-600 transition">{{ c['name'] }}</h3>
+                    <p class="text-xs text-gray-400 mt-1 font-medium">ID: <span class="font-mono font-bold">{{ c['id'] }}</span></p>
                 </div>
                 <div class="text-right">
-                    <span class="block text-2xl font-black text-gray-800">{{ c['count'] }}</span>
-                    <span class="text-[10px] text-gray-400 uppercase font-bold">счетов</span>
+                    <span class="block text-3xl font-black text-blue-600 font-mono">{{ c['count'] }}</span>
+                    <span class="text-[10px] text-gray-400 uppercase font-black tracking-widest">счетов</span>
                 </div>
             </div>
             
-            <div class="bg-gray-50 p-4 rounded-xl flex justify-between items-center border border-gray-100">
+            <div class="bg-gray-50/50 p-5 rounded-2xl flex justify-between items-center border border-gray-100 group-hover:bg-blue-50/30 transition">
                 <div>
-                    <span class="block text-[10px] text-gray-400 uppercase font-bold tracking-widest">Оборот</span>
-                    <span class="block font-black text-gray-700">{{ '{:,.0f}'.format(c['revenue']).replace(',', ' ') }} тг</span>
+                    <span class="block text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">Оборот</span>
+                    <span class="block font-black text-gray-900 font-mono text-lg">{{ '{:,.0f}'.format(c['revenue']).replace(',', ' ') }} <span class="text-sm font-sans text-gray-500 font-medium">₸</span></span>
                 </div>
                 <div class="text-right">
-                    <span class="block text-[10px] text-gray-400 uppercase font-bold tracking-widest">Чистая прибыль</span>
-                    <span class="block font-black text-green-600 text-lg">{{ '{:,.0f}'.format(c['profit']).replace(',', ' ') }} тг</span>
+                    <span class="block text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">Чистая прибыль</span>
+                    <span class="block font-black text-green-600 text-xl font-mono">{{ '{:,.0f}'.format(c['profit']).replace(',', ' ') }} <span class="text-sm font-sans font-medium">₸</span></span>
                 </div>
             </div>
         </a>

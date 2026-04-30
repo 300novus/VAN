@@ -3,59 +3,78 @@
 <head>
     <meta charset="UTF-8"><title>КП: {{ prop[2] }}</title>
     <style>
-        @page { size: A4; margin: 0; }
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a1a1a; background: #e5e7eb; margin: 0; padding: 40px 0; -webkit-print-color-adjust: exact; print-color-adjust: exact;}
+        /* Подключаем наши локальные шрифты для PDF */
+        @import url('/static/fonts/jetbrains-mono.css');
         
-        .document { width: 210mm; min-height: 297mm; margin: 0 auto; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; position: relative;}
+        @page { size: A4; margin: 0; }
+        body { 
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+            color: #1f2937; 
+            background: #e5e7eb; 
+            margin: 0; 
+            padding: 40px 0; 
+            -webkit-print-color-adjust: exact; 
+            print-color-adjust: exact;
+        }
+        
+        /* Моноширинный шрифт для цифр */
+        .font-mono { font-family: 'JetBrains Mono', monospace !important; }
+        
+        .document { width: 210mm; min-height: 297mm; margin: 0 auto; background: #fff; box-shadow: 0 10px 40px rgba(0,0,0,0.08); display: flex; flex-direction: column; position: relative;}
         @media print { body { background: none; padding: 0; } .document { box-shadow: none; padding: 0; } .no-print { display: none !important; } }
         
         .no-print { text-align: center; margin-bottom: 30px; }
-        .btn { background: #1a1a1a; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 0 10px; display: inline-block; cursor:pointer; border:none;}
+        .btn { background: #1f2937; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 12px; font-weight: bold; margin: 0 10px; display: inline-block; cursor:pointer; border:none; transition: 0.2s;}
+        .btn:hover { background: #000; }
         
         /* ЮВЕЛИРНАЯ ВЕРСТКА: Раздутые блоки (узкий padding) */
-        .page-content { padding: 15mm 8mm; }
+        .page-content { padding: 15mm 12mm; }
 
         /* HEADER */
-        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #1a1a1a; padding-bottom: 10px; margin-bottom: 20px; }
-        .logo { width: 48%; font-size: 20px; font-weight: 900; text-transform: uppercase; line-height: 1.1; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1f2937; padding-bottom: 15px; margin-bottom: 30px; }
+        .logo { width: 48%; font-size: 24px; font-weight: 900; text-transform: uppercase; line-height: 1.1; letter-spacing: -0.5px;}
         .kp-info { width: 48%; text-align: right; } 
-        .kp-info h1 { margin: 0 0 5px 0; font-size: 14px; text-transform: uppercase; color: #1a1a1a; font-weight: 900;} 
-        .kp-info p { margin: 0; color: #666; font-size: 11px; line-height: 1.3; }
+        .kp-info h1 { margin: 0 0 8px 0; font-size: 16px; text-transform: uppercase; color: #1f2937; font-weight: 900; letter-spacing: 1px;} 
+        .kp-info p { margin: 0; color: #6b7280; font-size: 12px; line-height: 1.4; font-weight: 500;}
 
         /* COVER BLOCK */
-        .block-cover { position: relative; width: 100%; height: 500px; border-radius: 12px; overflow: hidden; background: #fff; margin-bottom: 15px; display: flex; page-break-inside: avoid;}
+        .block-cover { position: relative; width: 100%; height: 500px; border-radius: 16px; overflow: hidden; background: #fff; margin-bottom: 20px; display: flex; page-break-inside: avoid; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);}
         .cover-content { position: absolute; left: 40px; bottom: 40px; z-index: 10; display: flex; flex-direction: column; }
-        .cover-top-text { font-size: 14px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
-        .cover-title { font-size: 48px; font-weight: 900; margin: 0 0 5px 0; text-transform: uppercase; line-height: 1.0; }
-        .cover-subtitle { font-size: 20px; margin: 0; font-weight: 500; }
+        .cover-top-text { font-size: 12px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; }
+        .cover-title { font-size: 46px; font-weight: 900; margin: 0 0 8px 0; text-transform: uppercase; line-height: 1.0; letter-spacing: -1px;}
+        .cover-subtitle { font-size: 18px; margin: 0; font-weight: 600; opacity: 0.9;}
 
         /* TEXT BLOCK */
-        .block-text { font-size: 16px; line-height: 1.8; margin-bottom: 15px; display: flex; gap: 30px; align-items: flex-start; page-break-inside: avoid; border-radius: 12px; padding: 25px;}
+        .block-text { font-size: 15px; line-height: 1.7; margin-bottom: 20px; display: flex; gap: 30px; align-items: flex-start; page-break-inside: avoid; border-radius: 16px; padding: 30px;}
         .block-text-content { flex: 1; }
-        .block-text-img { width: 25%; flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; } 
-        .block-text-img img { width: 100%; aspect-ratio: 1 / 1; border-radius: 8px; object-fit: cover; border: 1px solid #eee; }
+        .block-text-img { width: 28%; flex-shrink: 0; display: flex; flex-direction: column; gap: 15px; } 
+        .block-text-img img { width: 100%; aspect-ratio: 1 / 1; border-radius: 12px; object-fit: cover; border: 1px solid rgba(0,0,0,0.05); }
 
         /* PRODUCT BLOCK */
-        .block-product { background: #fff; border-radius: 12px; padding: 25px; border: 2px solid #f3f4f6; margin-bottom: 15px; page-break-inside: avoid; }
-        .product-gallery { display: flex; gap: 15px; margin-bottom: 15px; }
-        .product-gallery div { flex: 1; height: 240px; border-radius: 8px; overflow: hidden; background: #f9fafb; border: 1px solid #eee; }
+        .block-product { background: #fff; border-radius: 16px; padding: 30px; border: 1px solid #e5e7eb; margin-bottom: 20px; page-break-inside: avoid; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);}
+        .product-gallery { display: flex; gap: 15px; margin-bottom: 20px; }
+        .product-gallery div { flex: 1; height: 220px; border-radius: 12px; overflow: hidden; background: #f9fafb; border: 1px solid #f3f4f6; }
         .product-gallery img { width: 100%; height: 100%; object-fit: cover; }
-        .product-details { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #e5e7eb; padding-top: 15px; }
-        .product-name { font-size: 20px; font-weight: 900; margin: 0 0 5px 0; color: #1a1a1a; }
-        .product-price { text-align: right; } .product-price .sum { font-size: 26px; font-weight: 900; color: #2563eb; margin: 0; }
+        .product-details { display: flex; justify-content: space-between; align-items: flex-end; border-top: 2px dashed #f3f4f6; padding-top: 20px; }
+        .product-name { font-size: 22px; font-weight: 900; margin: 0 0 5px 0; color: #111827; letter-spacing: -0.5px;}
+        .product-price { text-align: right; } 
+        .product-price .sum { font-size: 28px; font-weight: 900; color: #2563eb; margin: 0; }
         
-        .spec-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .spec-table td { padding: 12px 0; border-bottom: 1px solid #eee; }
+        .spec-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .spec-table td { padding: 14px 0; border-bottom: 1px solid #f3f4f6; }
 
         /* TOTALS & FOOTER */
-        .totals { text-align: right; margin-top: 20px; padding-top: 20px; border-top: 3px solid #1a1a1a; page-break-inside: avoid;}
-        .grand-total { font-size: 48px; font-weight: 900; color: #1a1a1a; margin: 0; letter-spacing: -1.5px; }
-        .footer { margin-top: 40px; font-size: 11px; color: #888; border-top: 1px solid #eee; padding-top: 20px; display: flex; justify-content: space-between; page-break-inside: avoid;}
+        .totals { text-align: right; margin-top: 30px; padding-top: 25px; border-top: 3px solid #1f2937; page-break-inside: avoid;}
+        .totals h3 { margin: 0 0 5px 0; color: #6b7280; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; font-weight: 900;}
+        .grand-total { font-size: 52px; font-weight: 900; color: #111827; margin: 0; letter-spacing: -2px; line-height: 1;}
+        
+        .footer { margin-top: 50px; font-size: 11px; color: #9ca3af; border-top: 1px solid #f3f4f6; padding-top: 25px; display: flex; justify-content: space-between; page-break-inside: avoid;}
+        .footer strong { color: #4b5563; font-size: 12px;}
     </style>
 </head>
 <body>
     <div class="no-print">
-        <a href="/edit_proposal/{{ prop[0] }}" class="btn" style="background: #fff; color: #000; border: 2px solid #e5e7eb;">← В конструктор</a>
+        <a href="/edit_proposal/{{ prop[0] }}" class="btn" style="background: #fff; color: #111827; border: 1px solid #d1d5db;">← В конструктор</a>
         <button onclick="window.print()" class="btn" style="background:#2563eb;">🖨️ Печать PDF</button>
     </div>
 
@@ -63,7 +82,11 @@
         <div class="page-content">
             <div class="header">
                 <div class="logo">{{ s.company_name }}</div>
-                <div class="kp-info"><h1>Коммерческое предложение</h1><p>Проект: <strong style="color:#000;">{{ prop[2] }}</strong></p><p>Заказчик: {{ prop[4] }} | {{ prop[1] }}</p></div>
+                <div class="kp-info">
+                    <h1>Коммерческое предложение <span class="font-mono text-blue-600">№{{ prop[0] }}</span></h1>
+                    <p>Проект: <strong style="color:#111827;">{{ prop[2] }}</strong></p>
+                    <p>Заказчик: {{ prop[4] }} | {{ prop[1] }}</p>
+                </div>
             </div>
 
             {% for b in blocks %}
@@ -81,12 +104,13 @@
                         <div style="width:100%; height:100%; background:url('/static/uploads/{{ b[6] }}') center/cover;"></div>
                     {% endif %}
                     {% if s_cov.grad|int > 0 %}<div style="position: absolute; bottom:0; left:0; width:100%; height:80%; background: linear-gradient(to top, rgba(0,0,0,{{ s_cov.grad|int / 100 }}), transparent); pointer-events: none;"></div>{% endif %}
-                    <div class="cover-content" style="color: {{ s_cov.color }}; {% if s_cov.shadow == 'on' %}text-shadow: 0 2px 15px rgba(0,0,0,0.8);{% endif %}">
-                        <div class="cover-top-text">{{ s_cov.top_text }}</div>
+                    <div class="cover-content" style="color: {{ s_cov.color }}; {% if s_cov.shadow == 'on' %}text-shadow: 0 2px 20px rgba(0,0,0,0.8);{% endif %}">
+                        <div class="cover-top-text font-mono">{{ s_cov.top_text }}</div>
                         <h2 class="cover-title">{{ b[1] }}</h2>
                         <p class="cover-subtitle">{{ b[2] if b[2] else '' }}</p>
                     </div>
                 </div>
+                
                 {% elif b[0] == 'text' %}
                 {% set s_txt = json.loads(b[9]) if b[9] and '{' in b[9] else {'bg': '#f9fafb', 'color': '#333333', 'bc': '#2563eb', 'bw': '4', 'b_style': 'left', 'b_rad': '0'} %}
                 {% set border_css = 'border: ' ~ s_txt.bw ~ 'px solid ' ~ s_txt.bc if s_txt.b_style == 'all' else 'border: ' ~ s_txt.bw ~ 'px double ' ~ s_txt.bc if s_txt.b_style == 'double' else 'border-right: ' ~ s_txt.bw ~ 'px solid ' ~ s_txt.bc if s_txt.b_style == 'right' else 'border-top: ' ~ s_txt.bw ~ 'px solid ' ~ s_txt.bc if s_txt.b_style == 'top' else 'border-bottom: ' ~ s_txt.bw ~ 'px solid ' ~ s_txt.bc if s_txt.b_style == 'bottom' else 'border-left: ' ~ s_txt.bw ~ 'px solid ' ~ s_txt.bc %}
@@ -100,6 +124,7 @@
                     </div>
                     {% endif %}
                 </div>
+                
                 {% elif b[0] == 'product' %}
                 <div class="block-product">
                     {% if (b[6] and b[6] != 'None') or (b[7] and b[7] != 'None') or (b[8] and b[8] != 'None') %}
@@ -110,10 +135,17 @@
                     </div>
                     {% endif %}
                     <div class="product-details">
-                        <div><h3 class="product-name">{{ b[1] }}</h3><p style="color: #666; margin: 0; font-size: 13px;">Количество: <strong>{{ '{:g}'.format(b[3]) }} {{ b[5] }}</strong></p></div>
-                        <div class="product-price"><p style="color: #888; font-size: 11px; margin: 0 0 2px 0;">{{ '{:,.0f}'.format(b[4]).replace(',', ' ') }} тг / ед.</p><p class="sum">{{ '{:,.0f}'.format(b[3] * b[4]).replace(',', ' ') }} тг</p></div>
+                        <div>
+                            <h3 class="product-name font-mono">{{ b[1] }}</h3>
+                            <p style="color: #6b7280; margin: 0; font-size: 13px;">Количество: <strong class="font-mono text-gray-900">{{ '{:g}'.format(b[3]) }}</strong> {{ b[5] }}</p>
+                        </div>
+                        <div class="product-price">
+                            <p style="color: #9ca3af; font-size: 12px; margin: 0 0 4px 0; font-weight: 600;"><span class="font-mono">{{ '{:,.0f}'.format(b[4]).replace(',', ' ') }}</span> ₸ / ед.</p>
+                            <p class="sum font-mono">{{ '{:,.0f}'.format(b[3] * b[4]).replace(',', ' ') }} ₸</p>
+                        </div>
                     </div>
                 </div>
+                
                 {% elif b[0] == 'manual_product' %}
                 <div class="block-product">
                     {% if (b[6] and b[6] != 'None') or (b[7] and b[7] != 'None') or (b[8] and b[8] != 'None') %}
@@ -123,15 +155,15 @@
                         {% if b[8] and b[8] != 'None' %}<div><img src="/static/uploads/{{ b[8] }}"></div>{% endif %}
                     </div>
                     {% endif %}
-                    <h3 class="product-name" style="margin-top: 5px; border-bottom: 2px solid #f3f4f6; padding-bottom: 8px;">Спецификация</h3>
+                    <h3 class="product-name font-mono" style="margin-top: 5px; border-bottom: 2px dashed #f3f4f6; padding-bottom: 12px; font-size: 18px;">Спецификация</h3>
                     <table class="spec-table">
                         {% set rows = json.loads(b[9]) if b[9] else [] %}
                         {% for r in rows %}
                         <tr>
-                            <td style="font-weight: 900; width: 40%; font-size: 14px;">{{ r.title }}</td>
-                            <td style="text-align: center; color: #666; font-size: 13px;">{{ '{:g}'.format(r.qty|float) }} {{ r.unit }}</td>
-                            <td style="text-align: right; color: #888; font-size: 12px;">{{ '{:,.0f}'.format(r.price|float).replace(',', ' ') }} тг / ед.</td>
-                            <td style="text-align: right; font-weight: 900; color: #2563eb; font-size: 15px;">{{ '{:,.0f}'.format((r.qty|float) * (r.price|float)).replace(',', ' ') }} тг</td>
+                            <td style="font-weight: 800; width: 45%; font-size: 14px; color: #111827;" class="font-mono">{{ r.title }}</td>
+                            <td style="text-align: center; color: #6b7280; font-size: 13px;"><span class="font-mono font-bold">{{ '{:g}'.format(r.qty|float) }}</span> {{ r.unit }}</td>
+                            <td style="text-align: right; color: #9ca3af; font-size: 12px; font-weight: 600;"><span class="font-mono">{{ '{:,.0f}'.format(r.price|float).replace(',', ' ') }}</span> ₸ / ед.</td>
+                            <td style="text-align: right; font-weight: 900; color: #2563eb; font-size: 16px;" class="font-mono">{{ '{:,.0f}'.format((r.qty|float) * (r.price|float)).replace(',', ' ') }} ₸</td>
                         </tr>
                         {% endfor %}
                     </table>
@@ -139,10 +171,19 @@
                 {% endif %}
             {% endfor %}
 
-            <div class="totals"><h3>Итого по проекту:</h3><p class="grand-total">{{ '{:,.0f}'.format(prop[3]).replace(',', ' ') }} тг</p></div>
+            <div class="totals">
+                <h3>Итого по проекту:</h3>
+                <p class="grand-total font-mono">{{ '{:,.0f}'.format(prop[3]).replace(',', ' ') }} ₸</p>
+            </div>
+            
             <div class="footer">
-                <div><strong>Исполнитель: {{ s.company_name }}</strong><br>БИН: {{ s.company_bin }} | {{ s.company_address }}</div>
-                <div style="text-align: right;"><em>Предложение действительно 30 дней. Все цены в тенге.</em></div>
+                <div>
+                    <strong>Исполнитель: {{ s.company_name }}</strong><br>
+                    БИН: <span class="font-mono">{{ s.company_bin }}</span> | {{ s.company_address }}
+                </div>
+                <div style="text-align: right; padding-top: 4px;">
+                    <em>Предложение действительно 30 дней.<br>Все цены указаны в тенге.</em>
+                </div>
             </div>
         </div>
     </div>

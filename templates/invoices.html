@@ -1,41 +1,61 @@
 {% extends "base.html" %}
+
 {% block content %}
 <div class="p-10 max-w-7xl mx-auto">
+    <!-- Заголовок страницы -->
     <div class="flex justify-between items-center mb-8">
-        <h2 class="text-3xl font-black text-gray-900 tracking-tight">{{ title }}</h2>
-        <a href="/create_invoice{% if current_client %}?client={{ current_client }}{% endif %}" class="bg-black text-white px-6 py-2 rounded-xl font-bold hover:bg-gray-800 transition">Новый счёт</a>
+        <div>
+            <h2 class="text-3xl font-black text-gray-900 tracking-tight">{{ title }}</h2>
+            <p class="text-gray-500 text-sm mt-1">История выставленных счетов и статусы оплат</p>
+        </div>
+        <a href="/create_invoice{% if current_client %}?client={{ current_client }}{% endif %}" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-md shadow-blue-200"><i class="fas fa-plus mr-2"></i> Новый счёт</a>
     </div>
+
+    <!-- Таблица счетов -->
     <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
         <table class="w-full text-left">
             <thead>
-                <tr class="bg-gray-50 border-b border-gray-100">
-                    <th class="py-4 px-6 text-[10px] font-black text-gray-400 uppercase">№ Счета</th>
-                    <th class="py-4 px-6 text-[10px] font-black text-gray-400 uppercase">Заказчик</th>
-                    <th class="py-4 px-6 text-[10px] font-black text-gray-400 uppercase">Сумма</th>
-                    <th class="py-4 px-6 text-[10px] font-black text-gray-400 uppercase text-center">Статус / Анализ</th>
-                    <th class="py-4 px-6 text-[10px] font-black text-gray-400 uppercase text-right">Действия</th>
+                <tr class="bg-gray-50/50 border-b border-gray-100">
+                    <th class="py-4 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest w-24">№ Счета</th>
+                    <th class="py-4 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Заказчик</th>
+                    <th class="py-4 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Сумма</th>
+                    <th class="py-4 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Статус / Анализ</th>
+                    <th class="py-4 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Действия</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
                 {% for inv in invoices %}
-                <tr class="hover:bg-gray-50 transition">
-                    <td class="py-4 px-6 font-black text-gray-900">{{ inv[0] }}</td>
-                    <td class="py-4 px-6 text-gray-600 font-medium">{{ inv[1] }}</td>
-                    <td class="py-4 px-6 font-black text-gray-900">{{ '{:,.0f}'.format(inv[3]).replace(',', ' ') }} тг</td>
-                    <td class="py-4 px-6 text-center flex items-center justify-center space-x-4">
+                <tr class="hover:bg-gray-50 transition group">
+                    <!-- Номер счета моноширинным шрифтом -->
+                    <td class="py-4 px-6 font-bold text-blue-600 font-mono text-sm"><a href="/edit_invoice/{{ inv[0] }}" class="hover:underline">№{{ inv[0] }}</a></td>
+                    
+                    <!-- Имя заказчика ОБЫЧНЫМ шрифтом (чтобы хорошо читалось) -->
+                    <td class="py-4 px-6 text-gray-900 font-medium">{{ inv[1] }}</td>
+                    
+                    <!-- Сумма моноширинным шрифтом -->
+                    <td class="py-4 px-6 font-black text-gray-900 font-mono text-sm whitespace-nowrap">{{ '{:,.2f}'.format(inv[3]).replace(',', ' ') }} ₸</td>
+                    
+                    <td class="py-4 px-6 text-center flex justify-center items-center gap-2">
+                        <!-- Бесшовные кнопки статусов -->
                         {% if inv[4] == 0 %}
-                            <button onclick="setStatus('{{ inv[0] }}', 1)" class="px-4 py-1.5 rounded-full text-[10px] font-black bg-gray-100 text-gray-400 border border-gray-200 uppercase">Опубликовать</button>
+                            <button onclick="setStatus('{{ inv[0] }}', 1)" class="px-3 py-1 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500 hover:bg-gray-200 uppercase tracking-wider transition" title="Перевести в Ожидает">Черновик →</button>
                         {% elif inv[4] == 1 %}
-                            <button onclick="setStatus('{{ inv[0] }}', 2)" class="px-4 py-1.5 rounded-full text-[10px] font-black bg-yellow-100 text-yellow-600 uppercase">Ожидает →</button>
+                            <button onclick="setStatus('{{ inv[0] }}', 2)" class="px-3 py-1 rounded-full text-[10px] font-bold bg-yellow-50 text-yellow-600 hover:bg-yellow-100 uppercase tracking-wider transition" title="Отметить как Оплачен">Ожидает →</button>
                         {% else %}
-                            <button onclick="setStatus('{{ inv[0] }}', 1)" class="px-4 py-1.5 rounded-full text-[10px] font-black bg-green-100 text-green-600 uppercase">✓ Оплачено</button>
+                            <button onclick="setStatus('{{ inv[0] }}', 1)" class="px-3 py-1 rounded-full text-[10px] font-bold bg-green-50 text-green-600 hover:bg-green-100 uppercase tracking-wider transition" title="Вернуть в Ожидает">✓ Оплачен</button>
                         {% endif %}
-                        <a href="/invoice_stats/{{ inv[0] }}" class="text-blue-500 hover:text-blue-700 bg-blue-50 p-2 rounded-lg" title="Анализ прибыли"><i class="fas fa-chart-pie"></i></a>
+                        
+                        <!-- Кнопка Анализа -->
+                        <a href="/invoice_stats/{{ inv[0] }}" class="w-7 h-7 flex items-center justify-center bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition" title="Анализ прибыли"><i class="fas fa-chart-pie text-xs"></i></a>
                     </td>
-                    <td class="py-4 px-6 text-right space-x-3">
-                        {% if inv[4] == 0 %}<a href="/edit_invoice/{{ inv[0] }}" class="text-indigo-600 hover:text-indigo-800 transition" title="Изменить"><i class="fas fa-edit"></i></a>{% endif %}
-                        <a href="/print/{{ inv[0] }}" class="text-gray-400 hover:text-black"><i class="fas fa-print"></i></a>
-                        <button onclick="deleteInvoice('{{ inv[0] }}')" class="text-gray-300 hover:text-red-500 transition"><i class="fas fa-trash-alt"></i></button>
+                    
+                    <!-- Кнопки действий (появляются при наведении) -->
+                    <td class="py-4 px-6 text-right opacity-0 group-hover:opacity-100 transition space-x-2">
+                        {% if inv[4] == 0 %}
+                            <a href="/edit_invoice/{{ inv[0] }}" class="inline-flex items-center justify-center w-8 h-8 bg-blue-50 text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded-lg transition" title="Изменить"><i class="fas fa-pen text-xs"></i></a>
+                        {% endif %}
+                        <a href="/print/{{ inv[0] }}" class="inline-flex items-center justify-center w-8 h-8 bg-gray-50 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition" title="Печать PDF"><i class="fas fa-print text-xs"></i></a>
+                        <button onclick="deleteInvoice('{{ inv[0] }}')" class="inline-flex items-center justify-center w-8 h-8 bg-red-50 text-red-400 hover:text-red-600 hover:bg-red-100 rounded-lg transition" title="Удалить"><i class="fas fa-trash-alt text-xs"></i></button>
                     </td>
                 </tr>
                 {% endfor %}
@@ -43,8 +63,16 @@
         </table>
     </div>
 </div>
+
 <script>
-function setStatus(id, s) { fetch(`/api/update_status/${id}/${s}`, { method: 'POST' }).then(() => window.location.reload()); }
-function deleteInvoice(id) { if(confirm('Удалить счет? Это действие нельзя отменить.')) { fetch(`/api/delete_invoice/${id}`, { method: 'POST' }).then(() => window.location.reload()); } }
+    function setStatus(id, s) { 
+        fetch(`/api/update_status/${id}/${s}`, { method: 'POST' }).then(() => window.location.reload()); 
+    }
+    
+    function deleteInvoice(id) { 
+        if(confirm('Удалить счет? Это действие нельзя отменить.')) { 
+            fetch(`/api/delete_invoice/${id}`, { method: 'POST' }).then(() => window.location.reload()); 
+        } 
+    }
 </script>
 {% endblock %}

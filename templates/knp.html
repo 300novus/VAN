@@ -1,24 +1,34 @@
 {% extends "base.html" %}
+
 {% block content %}
 <div class="p-10 max-w-7xl mx-auto">
+    <!-- Заголовок страницы -->
     <div class="flex justify-between items-center mb-8">
-        <h2 class="text-3xl font-black text-gray-900">Справочник КНП</h2>
-        <button onclick="openModal('addModal')" class="bg-black text-white px-6 py-2.5 rounded-xl font-bold hover:bg-gray-800 transition"><i class="fas fa-plus mr-2"></i> Добавить КНП</button>
+        <div>
+            <h2 class="text-3xl font-black text-gray-900 tracking-tight">Справочник КНП</h2>
+            <p class="text-gray-500 text-sm mt-1">Коды назначения платежей</p>
+        </div>
+        <button onclick="openModal('addModal')" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-md shadow-blue-200"><i class="fas fa-plus mr-2"></i> Добавить КНП</button>
     </div>
+    
+    <!-- Таблица КНП -->
     <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
         <table class="w-full text-left">
             <thead>
-                <tr class="bg-gray-50 border-b border-gray-100 font-bold text-gray-500 text-[10px] uppercase tracking-widest">
-                    <th class="py-4 px-6 w-32">Код КНП</th><th class="py-4 px-6">Наименование / Назначение</th><th class="py-4 px-6 text-right">Действия</th>
+                <tr class="bg-gray-50/50 border-b border-gray-100">
+                    <th class="py-4 px-6 w-32 text-[10px] font-black text-gray-400 uppercase tracking-widest">Код КНП</th>
+                    <th class="py-4 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Наименование / Назначение</th>
+                    <th class="py-4 px-6 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Действия</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-50 text-sm">
                 {% for k in knp_list %}
-                <tr>
-                    <td class="py-4 px-6 font-black text-lg">{{ k[0] }}</td><td class="py-4 px-6 text-gray-600 font-medium">{{ k[1] }}</td>
-                    <td class="py-4 px-6 text-right space-x-2">
-                        <button onclick="openEditModal('{{ k[0] }}', '{{ k[1] }}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg font-bold"><i class="fas fa-pen"></i> Изм.</button>
-                        <button onclick="deleteKNP('{{ k[0] }}')" class="text-red-500 hover:text-red-700 bg-red-50 px-3 py-1.5 rounded-lg"><i class="fas fa-trash-alt"></i></button>
+                <tr class="hover:bg-gray-50 transition group">
+                    <td class="py-4 px-6 font-bold text-lg text-blue-600 font-mono">{{ k[0] }}</td>
+                    <td class="py-4 px-6 text-gray-900 font-medium">{{ k[1] }}</td>
+                    <td class="py-4 px-6 text-right space-x-2 opacity-0 group-hover:opacity-100 transition">
+                        <button onclick="openEditModal('{{ k[0] }}', '{{ k[1] }}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg font-bold transition" title="Изменить"><i class="fas fa-pen"></i></button>
+                        <button onclick="deleteKNP('{{ k[0] }}')" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition" title="Удалить"><i class="fas fa-trash-alt"></i></button>
                     </td>
                 </tr>
                 {% endfor %}
@@ -27,25 +37,45 @@
     </div>
 </div>
 
-<div id="addModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center backdrop-blur-sm z-50">
-    <div class="bg-white p-8 rounded-3xl w-[500px] shadow-2xl">
-        <h3 class="text-xl font-black mb-6">Новый КНП</h3>
+<!-- Модальное окно: Добавить -->
+<div id="addModal" class="fixed inset-0 bg-gray-900/50 hidden items-center justify-center backdrop-blur-sm z-50 transition-opacity">
+    <div class="bg-white p-8 rounded-3xl w-[500px] shadow-2xl border border-gray-100">
+        <h3 class="text-xl font-black mb-6 text-gray-900">Новый КНП</h3>
         <form id="addForm" class="space-y-4">
-            <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Код КНП</label><input id="k_code" required class="w-full bg-gray-50 p-3 rounded-xl border border-transparent outline-none"></div>
-            <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Назначение</label><input id="k_name" required class="w-full bg-gray-50 p-3 rounded-xl border border-transparent outline-none"></div>
-            <div class="pt-4 flex gap-3"><button type="button" onclick="closeModal('addModal')" class="flex-1 bg-gray-100 font-bold py-3 rounded-xl">Отмена</button><button type="submit" class="flex-1 bg-black text-white font-bold py-3 rounded-xl">Сохранить</button></div>
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Код КНП</label>
+                <input id="k_code" required class="w-full bg-gray-50 p-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 focus:bg-white transition font-mono font-bold">
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Назначение</label>
+                <input id="k_name" required class="w-full bg-gray-50 p-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 focus:bg-white transition font-medium">
+            </div>
+            <div class="pt-4 flex gap-3">
+                <button type="button" onclick="closeModal('addModal')" class="flex-1 bg-gray-100 text-gray-600 hover:bg-gray-200 font-bold py-3 rounded-xl transition">Отмена</button>
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md shadow-blue-200 transition">Сохранить</button>
+            </div>
         </form>
     </div>
 </div>
 
-<div id="editModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center backdrop-blur-sm z-50">
-    <div class="bg-white p-8 rounded-3xl w-[500px] shadow-2xl">
-        <h3 class="text-xl font-black mb-6">Изменить КНП</h3>
+<!-- Модальное окно: Изменить -->
+<div id="editModal" class="fixed inset-0 bg-gray-900/50 hidden items-center justify-center backdrop-blur-sm z-50 transition-opacity">
+    <div class="bg-white p-8 rounded-3xl w-[500px] shadow-2xl border border-gray-100">
+        <h3 class="text-xl font-black mb-6 text-gray-900">Изменить КНП</h3>
         <form id="editForm" class="space-y-4">
             <input type="hidden" id="e_old_code">
-            <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Код КНП</label><input id="e_code" required class="w-full bg-gray-50 p-3 rounded-xl border border-transparent outline-none"></div>
-            <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Назначение</label><input id="e_name" required class="w-full bg-gray-50 p-3 rounded-xl border border-transparent outline-none"></div>
-            <div class="pt-4 flex gap-3"><button type="button" onclick="closeModal('editModal')" class="flex-1 bg-gray-100 font-bold py-3 rounded-xl">Отмена</button><button type="submit" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl">Обновить</button></div>
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Код КНП</label>
+                <input id="e_code" required class="w-full bg-gray-50 p-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 focus:bg-white transition font-mono font-bold">
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Назначение</label>
+                <input id="e_name" required class="w-full bg-gray-50 p-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 focus:bg-white transition font-medium">
+            </div>
+            <div class="pt-4 flex gap-3">
+                <button type="button" onclick="closeModal('editModal')" class="flex-1 bg-gray-100 text-gray-600 hover:bg-gray-200 font-bold py-3 rounded-xl transition">Отмена</button>
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md shadow-blue-200 transition">Обновить</button>
+            </div>
         </form>
     </div>
 </div>

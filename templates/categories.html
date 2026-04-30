@@ -1,43 +1,46 @@
 {% extends "base.html" %}
+
 {% block content %}
 <div class="p-10 max-w-5xl mx-auto">
+    <!-- Заголовок страницы -->
     <div class="flex justify-between items-center mb-8">
         <div>
             <h2 class="text-3xl font-black text-gray-900 tracking-tight">Категории МАФ</h2>
-            <p class="text-gray-400 font-bold text-xs uppercase tracking-widest mt-1">Управление классификатором</p>
+            <p class="text-gray-500 text-sm mt-1">Управление классификатором каталога</p>
         </div>
-        <button onclick="openCategoryModal()" class="bg-[#1a1a1a] text-white px-6 py-2.5 rounded-xl font-bold hover:bg-gray-800 transition shadow-lg">
+        <button onclick="openCategoryModal()" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-md shadow-blue-200">
             <i class="fas fa-plus mr-2"></i> Создать категорию
         </button>
     </div>
 
+    <!-- Таблица -->
     <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
         <table class="w-full text-left border-collapse">
             <thead>
-                <tr class="bg-gray-50 border-b border-gray-100 font-black text-gray-400 text-[10px] uppercase tracking-widest">
-                    <th class="py-4 px-8">Иконка</th>
+                <tr class="bg-gray-50/50 border-b border-gray-100 font-black text-gray-400 text-[10px] uppercase tracking-widest">
+                    <th class="py-4 px-8 w-32">Иконка</th>
                     <th class="py-4 px-8">Название категории</th>
                     <th class="py-4 px-8 text-right">Действия</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
                 {% for cat in categories %}
-                <tr class="hover:bg-gray-50/50 transition">
+                <tr class="hover:bg-gray-50 transition group">
                     <td class="py-4 px-8">
-                        <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center border border-gray-200">
+                        <div class="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-100 shadow-sm group-hover:border-blue-200 group-hover:bg-blue-50/50 transition">
                             {% if cat.icon and (cat.icon.endswith('.png') or cat.icon.endswith('.svg') or cat.icon.endswith('.jpg') or cat.icon.endswith('.webp')) %}
-                                <img src="/static/category_icons/{{ cat.icon }}" class="w-8 h-8 object-contain">
+                                <img src="/static/category_icons/{{ cat.icon }}" class="w-7 h-7 object-contain">
                             {% else %}
-                                <i class="fas {{ cat.icon if cat.icon else 'fa-folder' }} text-gray-400"></i>
+                                <i class="fas {{ cat.icon if cat.icon else 'fa-folder' }} text-gray-400 text-lg"></i>
                             {% endif %}
                         </div>
                     </td>
                     <td class="py-4 px-8 font-bold text-gray-900 text-lg">{{ cat.name }}</td>
-                    <td class="py-4 px-8 text-right space-x-2">
-                        <button onclick="openCategoryModal('{{ cat.id }}', '{{ cat.name }}', '{{ cat.icon }}')" class="text-blue-500 hover:bg-blue-50 p-3 rounded-xl transition">
+                    <td class="py-4 px-8 text-right space-x-2 opacity-0 group-hover:opacity-100 transition">
+                        <button onclick="openCategoryModal('{{ cat.id }}', '{{ cat.name }}', '{{ cat.icon }}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 w-10 h-10 rounded-xl transition" title="Редактировать">
                             <i class="fas fa-pen"></i>
                         </button>
-                        <button onclick="deleteCategory('{{ cat.id }}')" class="text-red-400 hover:bg-red-50 p-3 rounded-xl transition">
+                        <button onclick="deleteCategory('{{ cat.id }}')" class="text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 w-10 h-10 rounded-xl transition" title="Удалить">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </td>
@@ -48,11 +51,12 @@
     </div>
 </div>
 
-<div id="catModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center backdrop-blur-sm z-50">
-    <div class="bg-white p-8 rounded-3xl w-[500px] shadow-2xl animate-fade-in">
+<!-- Модальное окно -->
+<div id="catModal" class="fixed inset-0 bg-gray-900/50 hidden items-center justify-center backdrop-blur-sm z-50 transition-opacity">
+    <div class="bg-white p-8 rounded-3xl w-[500px] shadow-2xl border border-gray-100">
         <div class="flex justify-between items-center mb-6">
             <h3 id="modalTitle" class="text-xl font-black text-gray-900">Новая категория</h3>
-            <button onclick="closeCategoryModal()" class="text-gray-400 hover:text-gray-900"><i class="fas fa-times text-xl"></i></button>
+            <button onclick="closeCategoryModal()" class="text-gray-400 hover:text-gray-900 transition"><i class="fas fa-times text-xl"></i></button>
         </div>
 
         <div class="space-y-6">
@@ -60,19 +64,22 @@
             
             <div>
                 <label class="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest">Название</label>
-                <input type="text" id="catName" class="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-2xl font-bold outline-none focus:border-blue-500 transition" placeholder="Напр: Скамейки">
+                <input type="text" id="catName" class="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl font-medium outline-none focus:border-blue-500 focus:bg-white transition" placeholder="Напр: Скамейки">
             </div>
 
             <div>
                 <label class="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest">Выберите иконку (из папки static/category_icons)</label>
-                <div id="iconGrid" class="grid grid-cols-4 gap-3 max-h-48 overflow-y-auto p-3 border border-gray-100 rounded-2xl bg-gray-50">
-                    </div>
+                <div id="iconGrid" class="grid grid-cols-4 gap-3 max-h-48 overflow-y-auto p-4 border border-gray-200 rounded-xl bg-gray-50/50">
+                    <!-- Иконки будут загружены сюда -->
+                </div>
                 <input type="hidden" id="selectedIcon">
             </div>
 
-            <button onclick="saveCategory()" class="w-full bg-[#1a1a1a] text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-black shadow-lg transition">
-                Сохранить категорию
-            </button>
+            <div class="pt-2">
+                <button onclick="saveCategory()" class="w-full bg-blue-600 text-white py-3.5 rounded-xl font-black hover:bg-blue-700 shadow-md shadow-blue-200 transition">
+                    Сохранить категорию
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -92,7 +99,7 @@
         document.getElementById('catId').value = id;
         document.getElementById('catName').value = name;
         document.getElementById('selectedIcon').value = icon;
-        document.getElementById('modalTitle').innerText = id ? 'Редактировать' : 'Новая категория';
+        document.getElementById('modalTitle').innerText = id ? 'Редактировать категорию' : 'Новая категория';
         
         renderIconGrid(icon);
         
@@ -108,7 +115,7 @@
     function renderIconGrid(currentIcon) {
         const grid = document.getElementById('iconGrid');
         if (localIcons.length === 0) {
-            grid.innerHTML = '<div class="col-span-4 text-[10px] text-center text-gray-400 font-bold p-4 uppercase">Папка static/category_icons пуста</div>';
+            grid.innerHTML = '<div class="col-span-4 text-xs text-center text-gray-400 font-bold p-4">Папка static/category_icons пуста</div>';
             return;
         }
 
@@ -116,9 +123,9 @@
             const isSelected = fileName === currentIcon;
             return `
                 <div onclick="selectIcon('${fileName}')" id="icon-${fileName.replace(/\\./g, '-')}" 
-                     class="icon-item cursor-pointer p-2 border-2 ${isSelected ? 'border-blue-500 bg-white' : 'border-transparent'} hover:border-blue-200 rounded-xl transition flex flex-col items-center">
+                     class="icon-item cursor-pointer p-3 border-2 ${isSelected ? 'border-blue-500 bg-white shadow-sm' : 'border-transparent hover:border-gray-300 hover:bg-white'} rounded-xl transition flex flex-col items-center">
                     <img src="/static/category_icons/${fileName}" class="w-8 h-8 object-contain">
-                    <div class="text-[8px] mt-1 text-gray-400 truncate w-full text-center" title="${fileName}">${fileName}</div>
+                    <div class="text-[9px] mt-2 text-gray-500 truncate w-full text-center font-medium" title="${fileName}">${fileName}</div>
                 </div>
             `;
         }).join('');
@@ -126,8 +133,14 @@
 
     function selectIcon(fileName) {
         document.getElementById('selectedIcon').value = fileName;
-        document.querySelectorAll('.icon-item').forEach(el => el.classList.replace('border-blue-500', 'border-transparent'));
-        document.getElementById('icon-' + fileName.replace(/\\./g, '-')).classList.replace('border-transparent', 'border-blue-500');
+        document.querySelectorAll('.icon-item').forEach(el => {
+            el.classList.replace('border-blue-500', 'border-transparent');
+            el.classList.replace('bg-white', 'hover:bg-white');
+            el.classList.remove('shadow-sm');
+        });
+        const selected = document.getElementById('icon-' + fileName.replace(/\\./g, '-'));
+        selected.classList.replace('border-transparent', 'border-blue-500');
+        selected.classList.add('bg-white', 'shadow-sm');
     }
 
     function saveCategory() {
@@ -150,7 +163,6 @@
         }).then(() => window.location.reload());
     }
 
-    // ИСПРАВЛЕНО: Теперь ID правильно подставляется в ссылку для удаления
     function deleteCategory(id) {
         if (confirm('Удалить эту категорию? Товары в ней могут остаться без привязки.')) {
             fetch('/api/delete_category/' + id, {

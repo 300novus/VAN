@@ -2,54 +2,105 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>ЧИНГИЗХАН ПРО | v2.1{{ title if title else 'Управление' }}</title>
+    <title>Чингисхан | PRO v3.1</title>
     <script src="{{ url_for('static', filename='css/tailwind.js') }}"></script>
     <link href="{{ url_for('static', filename='css/all.min.css') }}" rel="stylesheet">
     
     <style>
-        @import url('{{ url_for("static", filename="fonts/inter.css") }}');
-        body { font-family: 'Inter', sans-serif; }
+        /* Подключаем наш локальный JetBrains Mono */
+        @import url('{{ url_for("static", filename="fonts/jetbrains-mono.css") }}');
+        
+        /* Убрали несуществующий inter.css, используем красивые системные шрифты */
+        body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        
+        /* Принудительно применяем JetBrains Mono к классу font-mono */
+        .font-mono { font-family: 'JetBrains Mono', monospace !important; }
+        
+        /* Прячем скроллбар, но оставляем прокрутку */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-[#F8F9FA] flex h-screen font-sans">
-    <aside class="w-64 bg-[#1a1a1a] text-gray-300 flex flex-col shadow-xl z-50">
-        <div class="h-24 flex flex-col justify-center px-6 border-b border-gray-800 bg-[#111]">
-            <h1 class="text-2xl font-black tracking-tighter leading-tight">
-                <span style="color: #f97316;">ЧИНГИЗХАН</span><br>
-                <span style="color: #06b6d4;">ПРО</span>
-            </h1>
-            <p class="text-[9px] font-bold text-gray-500 mt-1 uppercase tracking-widest">Управление бизнесом v2.1</p>
+<body class="bg-[#f4f7f6] flex h-screen font-sans text-gray-800">
+    
+    <!-- Светлое боковое меню -->
+    <aside class="w-64 bg-white border-r border-gray-100 flex flex-col shadow-sm z-50">
+        <!-- Логотип -->
+        <div class="h-20 flex items-center px-6 border-b border-gray-50">
+            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-black text-lg mr-3 shadow-md shadow-blue-200">
+                <i class="fas fa-layer-group"></i>
+            </div>
+            <div>
+                <h1 class="text-[20px] font-black tracking-tight text-gray-900 leading-none uppercase">Чингизхан</h1>
+                <p class="text-[10px] font-bold text-gray-400 mt-0.5 tracking-widest uppercase">PRO v3.1</p>
+            </div>
         </div>
-        <nav class="flex-1 px-4 py-6 space-y-6 overflow-y-auto">
+
+        <!-- Навигация -->
+        <nav class="flex-1 px-4 py-6 space-y-6 overflow-y-auto scrollbar-hide" id="mainNav">
+            <!-- ГЛАВНАЯ -->
             <div>
-                <p class="text-xs font-bold text-gray-500 mb-3 px-2 tracking-wider">ГЛАВНОЕ</p>
+                <p class="text-[9px] font-bold text-gray-400 mb-2 px-3 tracking-widest uppercase">Главная</p>
                 <div class="space-y-1">
-                    <a href="/" class="flex items-center px-2 py-2.5 rounded-md hover:bg-gray-800 transition"><i class="fas fa-th-large w-6 text-center"></i><span class="ml-2 text-sm font-medium">Обзор</span></a>
-                    <a href="/catalog" class="flex items-center px-2 py-2.5 rounded-md hover:bg-gray-800 transition"><i class="fas fa-cubes w-6 text-center text-green-400"></i><span class="ml-2 text-sm font-medium text-white">Каталог МАФ</span></a>
-                    <a href="/proposals" class="flex items-center px-2 py-2.5 rounded-md hover:bg-gray-800 transition"><i class="fas fa-file-powerpoint w-6 text-center text-blue-400"></i><span class="ml-2 text-sm font-medium text-white">Журналы КП</span></a>
-                    <a href="/invoices" class="flex items-center px-2 py-2.5 rounded-md hover:bg-gray-800 transition"><i class="fas fa-file-invoice w-6 text-center"></i><span class="ml-2 text-sm font-medium">Счета</span></a>
-                    <a href="/create_invoice" class="flex items-center px-2 py-2.5 rounded-md hover:bg-gray-800 transition"><i class="fas fa-plus-circle w-6 text-center"></i><span class="ml-2 text-sm font-medium">Новый счёт</span></a>
+                    <a href="/" class="nav-link flex items-center px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 transition font-medium text-sm"><i class="fas fa-chart-line w-5 text-center mr-2 text-gray-400 icon"></i> Дашборд</a>
                 </div>
             </div>
+            
+            <!-- ПРОДАЖИ -->
             <div>
-                <p class="text-xs font-bold text-gray-500 mb-3 px-2 tracking-wider">КЛИЕНТЫ</p>
+                <p class="text-[9px] font-bold text-gray-400 mb-2 px-3 tracking-widest uppercase">Продажи</p>
                 <div class="space-y-1">
-                    <a href="/clients" class="flex items-center px-2 py-2.5 hover:bg-gray-800 rounded-md transition"><i class="fas fa-users w-6 text-center"></i><span class="ml-2 text-sm font-medium">Заказчики</span></a>
-                    <a href="/issued_invoices" class="flex items-center px-2 py-2.5 hover:bg-gray-800 rounded-md transition"><i class="fas fa-chart-pie w-6 text-center"></i><span class="ml-2 text-sm font-medium">Статистика</span></a>
+                    <a href="/proposals" class="nav-link flex items-center px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 transition font-medium text-sm"><i class="fas fa-file-invoice w-5 text-center mr-2 text-gray-400 icon"></i> Коммерческие КП</a>
+                    <a href="/invoices" class="nav-link flex items-center px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 transition font-medium text-sm"><i class="fas fa-receipt w-5 text-center mr-2 text-gray-400 icon"></i> Счета</a>
                 </div>
             </div>
+
+            <!-- СПРАВОЧНИКИ -->
             <div>
-                <p class="text-xs font-bold text-gray-500 mb-3 px-2 tracking-wider">СИСТЕМА</p>
+                <p class="text-[9px] font-bold text-gray-400 mb-2 px-3 tracking-widest uppercase">Справочники</p>
                 <div class="space-y-1">
-                    <a href="/categories" class="flex items-center px-2 py-2.5 hover:bg-gray-800 rounded-md transition"><i class="fas fa-tags w-6 text-center text-yellow-400"></i><span class="ml-2 text-sm font-medium">Категории МАФ</span></a>
-                    <a href="/knp" class="flex items-center px-2 py-2.5 hover:bg-gray-800 rounded-md transition"><i class="fas fa-list-ol w-6 text-center"></i><span class="ml-2 text-sm font-medium text-white">Справочник КНП</span></a>
-                    <a href="/settings" class="flex items-center px-2 py-2.5 hover:bg-gray-800 rounded-md transition"><i class="fas fa-cog w-6 text-center"></i><span class="ml-2 text-sm font-medium">Реквизиты</span></a>
+                    <a href="/clients" class="nav-link flex items-center px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 transition font-medium text-sm"><i class="fas fa-users w-5 text-center mr-2 text-gray-400 icon"></i> Клиенты</a>
+                    <a href="/catalog" class="nav-link flex items-center px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 transition font-medium text-sm"><i class="fas fa-cubes w-5 text-center mr-2 text-gray-400 icon"></i> Каталог</a>
+                    <a href="/categories" class="nav-link flex items-center px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 transition font-medium text-sm"><i class="fas fa-tags w-5 text-center mr-2 text-gray-400 icon"></i> Категории</a>
+                    <a href="/knp" class="nav-link flex items-center px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 transition font-medium text-sm"><i class="fas fa-code w-5 text-center mr-2 text-gray-400 icon"></i> КНП</a>
+                </div>
+            </div>
+
+            <!-- АНАЛИТИКА -->
+            <div>
+                <p class="text-[9px] font-bold text-gray-400 mb-2 px-3 tracking-widest uppercase">Аналитика</p>
+                <div class="space-y-1">
+                    <a href="/issued_invoices" class="nav-link flex items-center px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 transition font-medium text-sm"><i class="fas fa-chart-pie w-5 text-center mr-2 text-gray-400 icon"></i> По клиентам</a>
+                    <a href="/settings" class="nav-link flex items-center px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 transition font-medium text-sm"><i class="fas fa-cog w-5 text-center mr-2 text-gray-400 icon"></i> Настройки</a>
                 </div>
             </div>
         </nav>
     </aside>
+
+    <!-- Основной контент -->
     <main class="flex-1 overflow-y-auto">
         {% block content %}{% endblock %}
     </main>
+
+    <script>
+        // Скрипт для автоматической подсветки активного пункта меню
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                const linkPath = link.getAttribute('href');
+                if (currentPath === linkPath || (linkPath !== '/' && currentPath.startsWith(linkPath))) {
+                    // Активируем ссылку (синий фон, синий текст)
+                    link.className = 'nav-link flex items-center px-3 py-2 rounded-xl bg-blue-50 text-blue-600 transition font-bold text-sm';
+                    const icon = link.querySelector('.icon');
+                    if (icon) {
+                        icon.classList.remove('text-gray-400');
+                        icon.classList.add('text-blue-600');
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>

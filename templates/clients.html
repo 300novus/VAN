@@ -1,24 +1,41 @@
 {% extends "base.html" %}
+
 {% block content %}
 <div class="p-10 max-w-7xl mx-auto">
+    <!-- Заголовок страницы -->
     <div class="flex justify-between items-center mb-8">
-        <h2 class="text-3xl font-black text-gray-900">База заказчиков</h2>
-        <button onclick="openModal('addModal')" class="bg-black text-white px-6 py-2.5 rounded-xl font-bold hover:bg-gray-800 transition"><i class="fas fa-plus mr-2"></i> Добавить</button>
+        <div>
+            <h2 class="text-3xl font-black text-gray-900 tracking-tight">База заказчиков</h2>
+            <p class="text-gray-500 text-sm mt-1">Управление клиентами и реквизитами</p>
+        </div>
+        <button onclick="openModal('addModal')" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-md shadow-blue-200"><i class="fas fa-plus mr-2"></i> Добавить</button>
     </div>
+    
+    <!-- Таблица клиентов -->
     <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
         <table class="w-full text-left">
             <thead>
-                <tr class="bg-gray-50 border-b border-gray-100 font-bold text-gray-500 text-[10px] uppercase tracking-widest"><th class="py-4 px-6">ID</th><th class="py-4 px-6">Наименование / БИН</th><th class="py-4 px-6">Контактное лицо</th><th class="py-4 px-6">Адрес</th><th class="py-4 px-6 text-right">Действия</th></tr>
+                <tr class="bg-gray-50/50 border-b border-gray-100">
+                    <th class="py-4 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest w-20">ID</th>
+                    <th class="py-4 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Наименование / БИН</th>
+                    <th class="py-4 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Контактное лицо</th>
+                    <th class="py-4 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Адрес</th>
+                    <th class="py-4 px-6 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Действия</th>
+                </tr>
             </thead>
             <tbody class="divide-y divide-gray-50 text-sm">
                 {% for c in clients %}
-                <tr>
-                    <td class="py-4 px-6 font-black">{{ c[0] }}</td>
-                    <td class="py-4 px-6 font-bold">{{ c[1] }}<br><span class="text-xs text-gray-400 font-normal">БИН: {{ c[2] }}</span></td>
-                    <td class="py-4 px-6 text-gray-600">{{ c[3] }}</td><td class="py-4 px-6 text-gray-600">{{ c[4] }}</td>
-                    <td class="py-4 px-6 text-right space-x-2">
-                        <button onclick="openEditModal('{{ c[0] }}', '{{ c[1] }}', '{{ c[2] }}', '{{ c[3] }}', '{{ c[4] }}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg font-bold"><i class="fas fa-pen"></i> Изм.</button>
-                        <button onclick="deleteClient('{{ c[0] }}')" class="text-red-500 hover:text-red-700 bg-red-50 px-3 py-1.5 rounded-lg"><i class="fas fa-trash-alt"></i></button>
+                <tr class="hover:bg-gray-50 transition group">
+                    <td class="py-4 px-6 font-bold text-blue-600 font-mono">{{ c[0] }}</td>
+                    <td class="py-4 px-6 font-bold text-gray-900">
+                        {{ c[1] }}<br>
+                        <span class="text-xs text-gray-400 font-medium">БИН: <span class="font-mono text-gray-500">{{ c[2] }}</span></span>
+                    </td>
+                    <td class="py-4 px-6 text-gray-600 font-medium">{{ c[3] }}</td>
+                    <td class="py-4 px-6 text-gray-500 text-xs">{{ c[4] }}</td>
+                    <td class="py-4 px-6 text-right space-x-2 opacity-0 group-hover:opacity-100 transition">
+                        <button onclick="openEditModal('{{ c[0] }}', '{{ c[1] }}', '{{ c[2] }}', '{{ c[3] }}', '{{ c[4] }}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg font-bold transition" title="Изменить"><i class="fas fa-pen"></i></button>
+                        <button onclick="deleteClient('{{ c[0] }}')" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition" title="Удалить"><i class="fas fa-trash-alt"></i></button>
                     </td>
                 </tr>
                 {% endfor %}
@@ -26,37 +43,76 @@
         </table>
     </div>
 </div>
-<div id="addModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center backdrop-blur-sm z-50">
-    <div class="bg-white p-8 rounded-3xl w-[500px] shadow-2xl">
-        <h3 class="text-xl font-black mb-6">Новый заказчик</h3>
+
+<!-- Модальное окно: Добавить -->
+<div id="addModal" class="fixed inset-0 bg-gray-900/50 hidden items-center justify-center backdrop-blur-sm z-50 transition-opacity">
+    <div class="bg-white p-8 rounded-3xl w-[500px] shadow-2xl border border-gray-100">
+        <h3 class="text-xl font-black mb-6 text-gray-900">Новый заказчик</h3>
         <form id="addForm" class="space-y-4">
-            <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Код (ID)</label><input id="a_id" required class="w-full bg-gray-50 p-3 rounded-xl border border-transparent focus:border-gray-300 outline-none"></div>
-            <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Наименование</label><input id="a_name" required class="w-full bg-gray-50 p-3 rounded-xl border border-transparent focus:border-gray-300 outline-none"></div>
-            <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">БИН</label><input id="a_bin" class="w-full bg-gray-50 p-3 rounded-xl border border-transparent focus:border-gray-300 outline-none"></div>
-            <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Контактное лицо</label><input id="a_contact" class="w-full bg-gray-50 p-3 rounded-xl border border-transparent focus:border-gray-300 outline-none"></div>
-            <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Адрес (Для счета)</label><input id="a_address" class="w-full bg-gray-50 p-3 rounded-xl border border-transparent focus:border-gray-300 outline-none"></div>
-            <div class="pt-4 flex gap-3"><button type="button" onclick="closeModal('addModal')" class="flex-1 bg-gray-100 text-gray-700 font-bold py-3 rounded-xl">Отмена</button><button type="submit" class="flex-1 bg-black text-white font-bold py-3 rounded-xl shadow-lg">Сохранить</button></div>
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Код (ID)</label>
+                <input id="a_id" required class="w-full bg-gray-50 p-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 focus:bg-white transition font-mono font-bold">
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Наименование</label>
+                <input id="a_name" required class="w-full bg-gray-50 p-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 focus:bg-white transition font-medium">
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">БИН</label>
+                <input id="a_bin" class="w-full bg-gray-50 p-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 focus:bg-white transition font-mono font-bold">
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Контактное лицо</label>
+                <input id="a_contact" class="w-full bg-gray-50 p-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 focus:bg-white transition font-medium">
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Адрес (Для счета)</label>
+                <input id="a_address" class="w-full bg-gray-50 p-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 focus:bg-white transition text-sm">
+            </div>
+            <div class="pt-4 flex gap-3">
+                <button type="button" onclick="closeModal('addModal')" class="flex-1 bg-gray-100 text-gray-600 hover:bg-gray-200 font-bold py-3 rounded-xl transition">Отмена</button>
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md shadow-blue-200 transition">Сохранить</button>
+            </div>
         </form>
     </div>
 </div>
-<div id="editModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center backdrop-blur-sm z-50">
-    <div class="bg-white p-8 rounded-3xl w-[500px] shadow-2xl">
-        <h3 class="text-xl font-black mb-6">Изменить заказчика</h3>
+
+<!-- Модальное окно: Изменить -->
+<div id="editModal" class="fixed inset-0 bg-gray-900/50 hidden items-center justify-center backdrop-blur-sm z-50 transition-opacity">
+    <div class="bg-white p-8 rounded-3xl w-[500px] shadow-2xl border border-gray-100">
+        <h3 class="text-xl font-black mb-6 text-gray-900">Изменить заказчика</h3>
         <form id="editForm" class="space-y-4">
             <input type="hidden" id="e_id">
-            <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Наименование</label><input id="e_name" required class="w-full bg-gray-50 p-3 rounded-xl border border-transparent focus:border-gray-300 outline-none"></div>
-            <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">БИН</label><input id="e_bin" class="w-full bg-gray-50 p-3 rounded-xl border border-transparent focus:border-gray-300 outline-none"></div>
-            <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Контактное лицо</label><input id="e_contact" class="w-full bg-gray-50 p-3 rounded-xl border border-transparent focus:border-gray-300 outline-none"></div>
-            <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Адрес</label><input id="e_address" class="w-full bg-gray-50 p-3 rounded-xl border border-transparent focus:border-gray-300 outline-none"></div>
-            <div class="pt-4 flex gap-3"><button type="button" onclick="closeModal('editModal')" class="flex-1 bg-gray-100 text-gray-700 font-bold py-3 rounded-xl">Отмена</button><button type="submit" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg">Обновить</button></div>
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Наименование</label>
+                <input id="e_name" required class="w-full bg-gray-50 p-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 focus:bg-white transition font-medium">
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">БИН</label>
+                <input id="e_bin" class="w-full bg-gray-50 p-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 focus:bg-white transition font-mono font-bold">
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Контактное лицо</label>
+                <input id="e_contact" class="w-full bg-gray-50 p-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 focus:bg-white transition font-medium">
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Адрес</label>
+                <input id="e_address" class="w-full bg-gray-50 p-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 focus:bg-white transition text-sm">
+            </div>
+            <div class="pt-4 flex gap-3">
+                <button type="button" onclick="closeModal('editModal')" class="flex-1 bg-gray-100 text-gray-600 hover:bg-gray-200 font-bold py-3 rounded-xl transition">Отмена</button>
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md shadow-blue-200 transition">Обновить</button>
+            </div>
         </form>
     </div>
 </div>
+
 <script>
     function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
     function openEditModal(id, name, bin, contact, address) { document.getElementById('e_id').value = id; document.getElementById('e_name').value = name; document.getElementById('e_bin').value = bin; document.getElementById('e_contact').value = contact; document.getElementById('e_address').value = address; openModal('editModal'); }
     function deleteClient(id) { if(confirm('Удалить заказчика?')) { fetch(`/api/delete_client/${id}`, { method: 'POST' }).then(r => r.json()).then(d => { if(d.success) window.location.reload(); }); } }
+    
     document.getElementById('addForm').onsubmit = (e) => { e.preventDefault(); fetch('/api/add_client', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ client_id: document.getElementById('a_id').value, name: document.getElementById('a_name').value, bin: document.getElementById('a_bin').value, contact: document.getElementById('a_contact').value, address: document.getElementById('a_address').value }) }).then(() => window.location.reload()); }
     document.getElementById('editForm').onsubmit = (e) => { e.preventDefault(); fetch('/api/edit_client', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ client_id: document.getElementById('e_id').value, name: document.getElementById('e_name').value, bin: document.getElementById('e_bin').value, contact: document.getElementById('e_contact').value, address: document.getElementById('e_address').value }) }).then(() => window.location.reload()); }
 </script>

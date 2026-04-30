@@ -1,11 +1,17 @@
 {% extends "base.html" %}
+
 {% block content %}
 <div class="p-10 max-w-7xl mx-auto pb-32">
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-3xl font-black text-gray-900">Каталог МАФ и изделий</h2>
-        <button onclick="openModal('addModal')" class="bg-green-500 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-green-600 transition shadow-lg shadow-green-200"><i class="fas fa-plus mr-2"></i> Добавить изделие</button>
+    <!-- Заголовок страницы -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h2 class="text-3xl font-black text-gray-900 font-mono">Каталог МАФ и изделий</h2>
+            <p class="text-gray-500 text-sm mt-1">База товаров и расчет себестоимости</p>
+        </div>
+        <button onclick="openModal('addModal')" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-md shadow-blue-200"><i class="fas fa-plus mr-2"></i> Добавить изделие</button>
     </div>
     
+    <!-- Фильтры категорий -->
     <div class="flex space-x-2 overflow-x-auto pb-4 mb-6 scrollbar-hide">
         <button class="cat-btn active bg-gray-900 text-white px-5 py-2 rounded-full text-sm font-bold shadow transition flex items-center" onclick="filterCat('all', this)">Все</button>
         {% for cat in categories %}
@@ -20,19 +26,20 @@
         {% endfor %}
     </div>
 
+    <!-- Сетка товаров -->
     <div class="grid grid-cols-3 gap-6" id="catalogGrid">
         {% for item in items %}
-        <div class="catalog-card bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden group flex flex-col transition hover:shadow-md" data-cat="{{ item.cat_id }}" id="item-{{ item.id }}">
+        <div class="catalog-card bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden group flex flex-col transition hover:shadow-md" data-cat="{{ item.cat_id }}" id="item-{{ item.id }}">
             <script type="application/json" class="bom-data">{{ item.bom|safe if item.bom else '[]' }}</script>
-            <div class="h-48 bg-gray-100 relative overflow-hidden flex">
+            <div class="h-48 bg-gray-50 relative overflow-hidden flex">
                 {% if item.img1 %}<div class="flex-1"><img src="/static/uploads/{{ item.img1 }}" class="w-full h-full object-cover"></div>{% endif %}
                 {% if item.img2 %}<div class="flex-1"><img src="/static/uploads/{{ item.img2 }}" class="w-full h-full object-cover border-l border-white"></div>{% endif %}
                 {% if item.img3 %}<div class="flex-1"><img src="/static/uploads/{{ item.img3 }}" class="w-full h-full object-cover border-l border-white"></div>{% endif %}
-                {% if not item.img1 and not item.img2 and not item.img3 %}<div class="w-full h-full flex items-center justify-center text-gray-400 font-bold"><i class="fas fa-image mr-2 text-2xl"></i> Нет фото</div>{% endif %}
+                {% if not item.img1 and not item.img2 and not item.img3 %}<div class="w-full h-full flex items-center justify-center text-gray-300 font-bold"><i class="fas fa-image mr-2 text-2xl"></i> Нет фото</div>{% endif %}
             </div>
             <div class="p-6 flex flex-col flex-1">
                 <div class="flex justify-between items-start mb-2">
-                    <h3 class="font-black text-lg text-gray-900 leading-tight item-name">{{ item.name }}</h3>
+                    <h3 class="font-black text-lg text-gray-900 leading-tight item-name font-mono">{{ item.name }}</h3>
                     {% for cat in categories %}
                         {% if cat.id == item.cat_id %}
                             {% if cat.icon and (cat.icon.endswith('.png') or cat.icon.endswith('.svg') or cat.icon.endswith('.jpg') or cat.icon.endswith('.webp')) %}
@@ -43,15 +50,15 @@
                         {% endif %}
                     {% endfor %}
                 </div>
-                <p class="text-xs text-gray-500 mb-4 line-clamp-2 flex-1 item-desc">{{ item.desc }}</p>
+                <p class="text-xs text-gray-500 mb-4 line-clamp-2 flex-1 item-desc font-mono">{{ item.desc }}</p>
                 <div class="flex justify-between items-end border-t border-gray-100 pt-4 mt-auto">
                     <div>
-                        <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Себест: <span class="text-red-400 item-cost">{{ '{:,.0f}'.format(item.cost).replace(',', ' ') }}</span></p>
-                        <p class="font-black text-blue-600 text-lg"><span class="item-retail">{{ '{:,.0f}'.format(item.retail_price).replace(',', ' ') }}</span> тг</p>
+                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Себест: <span class="text-red-500 font-mono item-cost">{{ '{:,.0f}'.format(item.cost).replace(',', ' ') }}</span> ₸</p>
+                        <p class="font-black text-gray-900 text-xl font-mono"><span class="item-retail">{{ '{:,.0f}'.format(item.retail_price).replace(',', ' ') }}</span> ₸</p>
                     </div>
-                    <div class="space-x-2 flex">
-                        <button onclick="handleEditClick('{{ item.id }}', '{{ item.unit }}', '{{ item.cat_id }}', '{{ item.img1 }}', '{{ item.img2 }}', '{{ item.img3 }}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 w-10 h-10 flex items-center justify-center rounded-xl transition"><i class="fas fa-pen"></i></button>
-                        <button onclick="deleteCatalogItem('{{ item.id }}')" class="text-red-400 hover:text-red-600 bg-red-50 w-10 h-10 flex items-center justify-center rounded-xl transition"><i class="fas fa-trash-alt"></i></button>
+                    <div class="space-x-2 flex opacity-0 group-hover:opacity-100 transition">
+                        <button onclick="handleEditClick('{{ item.id }}', '{{ item.unit }}', '{{ item.cat_id }}', '{{ item.img1 }}', '{{ item.img2 }}', '{{ item.img3 }}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 w-10 h-10 flex items-center justify-center rounded-xl transition" title="Изменить"><i class="fas fa-pen"></i></button>
+                        <button onclick="deleteCatalogItem('{{ item.id }}')" class="text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 w-10 h-10 flex items-center justify-center rounded-xl transition" title="Удалить"><i class="fas fa-trash-alt"></i></button>
                     </div>
                 </div>
             </div>
@@ -60,107 +67,134 @@
     </div>
 </div>
 
-<div id="addModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center backdrop-blur-sm z-50">
-    <div class="bg-white p-8 rounded-3xl w-[700px] shadow-2xl max-h-[90vh] overflow-y-auto relative">
-        <button onclick="closeModal('addModal')" class="absolute top-6 right-6 text-gray-400 hover:text-gray-900"><i class="fas fa-times text-xl"></i></button>
-        <h3 class="text-xl font-black mb-6">Новое изделие</h3>
+<!-- Модальное окно: Добавить изделие -->
+<div id="addModal" class="fixed inset-0 bg-gray-900/50 hidden items-center justify-center backdrop-blur-sm z-50 transition-opacity">
+    <div class="bg-white p-8 rounded-3xl w-[700px] shadow-2xl max-h-[90vh] overflow-y-auto relative border border-gray-100">
+        <button onclick="closeModal('addModal')" class="absolute top-6 right-6 text-gray-400 hover:text-gray-900 transition"><i class="fas fa-times text-xl"></i></button>
+        <h3 class="text-xl font-black mb-6 text-gray-900 font-mono">Новое изделие</h3>
         <form action="/api/add_catalog" method="POST" enctype="multipart/form-data" class="space-y-4">
             <div class="grid grid-cols-2 gap-4">
-                <div><label class="block text-xs font-bold text-gray-500 mb-1">Название</label><input type="text" name="name" required class="w-full bg-gray-50 border p-2 rounded-xl"></div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1">Категория</label>
-                    <select name="category_id" class="w-full bg-gray-50 border p-2 rounded-xl">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Название</label>
+                    <input type="text" name="name" required class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:border-blue-500 focus:bg-white transition font-mono font-bold text-gray-900">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Категория</label>
+                    <select name="category_id" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:border-blue-500 focus:bg-white transition font-medium">
                         <option value="0">Без категории</option>
                         {% for c in categories %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
                     </select>
                 </div>
             </div>
-            <div><label class="block text-xs font-bold text-gray-500 mb-1">Описание (для КП)</label><textarea name="description" rows="2" class="w-full bg-gray-50 border p-2 rounded-xl"></textarea></div>
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Описание (для КП)</label>
+                <textarea name="description" rows="2" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:border-blue-500 focus:bg-white transition text-sm font-mono"></textarea>
+            </div>
             <div class="grid grid-cols-3 gap-4">
-                <div><label class="block text-xs font-bold text-gray-500 mb-1">Ед. изм.</label><input type="text" name="unit" value="шт." class="w-full bg-gray-50 border p-2 rounded-xl text-center"></div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1">Себестоимость</label>
-                    <input type="number" step="0.01" name="cost" id="c_cost_add" readonly class="w-full bg-gray-100 border p-2 rounded-xl text-right font-bold text-red-500 transition-colors" value="0">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Ед. изм.</label>
+                    <input type="text" name="unit" value="шт." class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:border-blue-500 focus:bg-white transition text-center font-medium">
                 </div>
-                <div><label class="block text-xs font-bold text-gray-500 mb-1">Цена продажи</label><input type="number" step="0.01" name="retail_price" required class="w-full bg-gray-50 border p-2 rounded-xl text-right font-bold text-blue-600"></div>
+                <div>
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Себестоимость</label>
+                    <input type="number" step="0.01" name="cost" id="c_cost_add" readonly class="w-full bg-gray-100 border border-gray-200 p-3 rounded-xl outline-none text-right font-mono font-bold text-red-500 transition-colors" value="0">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Цена продажи</label>
+                    <input type="number" step="0.01" name="retail_price" required class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:border-blue-500 focus:bg-white transition text-right font-mono font-bold text-gray-900">
+                </div>
             </div>
 
-            <div class="border p-4 rounded-xl mt-4">
-                <div class="flex justify-between items-center mb-2">
-                    <label class="block text-xs font-black text-blue-600 uppercase">Спецификация</label>
-                    <label class="flex items-center text-xs text-gray-500 cursor-pointer font-bold select-none">
-                        <input type="checkbox" id="autoCostAdd" checked onchange="toggleAutoCost('add')" class="mr-2 accent-blue-500 w-4 h-4"> Авто-расчет
+            <div class="border border-gray-200 p-5 rounded-2xl mt-4 bg-gray-50/50">
+                <div class="flex justify-between items-center mb-3">
+                    <label class="block text-[10px] font-black text-blue-600 uppercase tracking-widest">Спецификация</label>
+                    <label class="flex items-center text-xs text-gray-600 cursor-pointer font-bold select-none">
+                        <input type="checkbox" id="autoCostAdd" checked onchange="toggleAutoCost('add')" class="mr-2 accent-blue-600 w-4 h-4 rounded"> Авто-расчет
                     </label>
                 </div>
                 <div id="bom_rows_add" class="space-y-2"></div>
-                <button type="button" onclick="addBomRow('add')" class="text-xs font-bold text-blue-500 hover:underline mt-2"><i class="fas fa-plus"></i> Добавить материал/работу</button>
+                <button type="button" onclick="addBomRow('add')" class="text-xs font-bold text-blue-600 hover:text-blue-800 transition mt-3 flex items-center"><i class="fas fa-plus mr-1"></i> Добавить материал/работу</button>
             </div>
 
-            <div class="grid grid-cols-3 gap-2 mt-4">
+            <div class="grid grid-cols-3 gap-3 mt-4">
                 {% for i in range(1, 4) %}
-                <div class="relative h-24 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center hover:bg-gray-50 overflow-hidden group">
+                <div class="relative h-28 border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center hover:bg-gray-50 overflow-hidden group transition">
                     <input type="file" name="img{{ i }}" class="absolute inset-0 opacity-0 cursor-pointer z-10" onchange="previewImg(this, 'l_a_i{{ i }}')">
-                    <i class="fas fa-camera text-gray-300 text-xl group-hover:text-blue-400"></i>
+                    <i class="fas fa-camera text-gray-300 text-2xl group-hover:text-blue-500 transition"></i>
                     <img id="l_a_i{{ i }}" class="absolute inset-0 w-full h-full object-cover hidden">
                 </div>
                 {% endfor %}
             </div>
-            <button type="submit" class="w-full bg-green-500 text-white py-3 rounded-xl font-black mt-4">Сохранить в каталог</button>
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-black mt-6 shadow-md shadow-blue-200 transition">Сохранить в каталог</button>
         </form>
     </div>
 </div>
 
-<div id="editModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center backdrop-blur-sm z-50">
-    <div class="bg-white p-8 rounded-3xl w-[700px] shadow-2xl max-h-[90vh] overflow-y-auto relative">
-        <button onclick="closeModal('editModal')" class="absolute top-6 right-6 text-gray-400 hover:text-gray-900"><i class="fas fa-times text-xl"></i></button>
-        <h3 class="text-xl font-black mb-6">Редактировать изделие</h3>
+<!-- Модальное окно: Редактировать изделие -->
+<div id="editModal" class="fixed inset-0 bg-gray-900/50 hidden items-center justify-center backdrop-blur-sm z-50 transition-opacity">
+    <div class="bg-white p-8 rounded-3xl w-[700px] shadow-2xl max-h-[90vh] overflow-y-auto relative border border-gray-100">
+        <button onclick="closeModal('editModal')" class="absolute top-6 right-6 text-gray-400 hover:text-gray-900 transition"><i class="fas fa-times text-xl"></i></button>
+        <h3 class="text-xl font-black mb-6 text-gray-900 font-mono">Редактировать изделие</h3>
         <form action="/api/edit_catalog" method="POST" enctype="multipart/form-data" class="space-y-4">
             <input type="hidden" name="item_id" id="e_item_id">
             <div class="grid grid-cols-2 gap-4">
-                <div><label class="block text-xs font-bold text-gray-500 mb-1">Название</label><input type="text" name="name" id="e_name" required class="w-full bg-gray-50 border p-2 rounded-xl"></div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1">Категория</label>
-                    <select name="category_id" id="e_cat" class="w-full bg-gray-50 border p-2 rounded-xl">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Название</label>
+                    <input type="text" name="name" id="e_name" required class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:border-blue-500 focus:bg-white transition font-mono font-bold text-gray-900">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Категория</label>
+                    <select name="category_id" id="e_cat" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:border-blue-500 focus:bg-white transition font-medium">
                         <option value="0">Без категории</option>
                         {% for c in categories %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
                     </select>
                 </div>
             </div>
-            <div><label class="block text-xs font-bold text-gray-500 mb-1">Описание (для КП)</label><textarea name="description" id="e_desc" rows="2" class="w-full bg-gray-50 border p-2 rounded-xl"></textarea></div>
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Описание (для КП)</label>
+                <textarea name="description" id="e_desc" rows="2" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:border-blue-500 focus:bg-white transition text-sm font-mono"></textarea>
+            </div>
             <div class="grid grid-cols-3 gap-4">
-                <div><label class="block text-xs font-bold text-gray-500 mb-1">Ед. изм.</label><input type="text" name="unit" id="e_unit" class="w-full bg-gray-50 border p-2 rounded-xl text-center"></div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1">Себестоимость</label>
-                    <input type="number" step="0.01" name="cost" id="c_cost_edit" readonly class="w-full bg-gray-100 border p-2 rounded-xl text-right font-bold text-red-500 transition-colors">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Ед. изм.</label>
+                    <input type="text" name="unit" id="e_unit" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:border-blue-500 focus:bg-white transition text-center font-medium">
                 </div>
-                <div><label class="block text-xs font-bold text-gray-500 mb-1">Цена продажи</label><input type="number" step="0.01" name="retail_price" id="e_retail_price" required class="w-full bg-gray-50 border p-2 rounded-xl text-right font-bold text-blue-600"></div>
+                <div>
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Себестоимость</label>
+                    <input type="number" step="0.01" name="cost" id="c_cost_edit" readonly class="w-full bg-gray-100 border border-gray-200 p-3 rounded-xl outline-none text-right font-mono font-bold text-red-500 transition-colors">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Цена продажи</label>
+                    <input type="number" step="0.01" name="retail_price" id="e_retail_price" required class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:border-blue-500 focus:bg-white transition text-right font-mono font-bold text-gray-900">
+                </div>
             </div>
 
-            <div class="border p-4 rounded-xl mt-4">
-                <div class="flex justify-between items-center mb-2">
-                    <label class="block text-xs font-black text-blue-600 uppercase">Спецификация</label>
-                    <label class="flex items-center text-xs text-gray-500 cursor-pointer font-bold select-none">
-                        <input type="checkbox" id="autoCostEdit" checked onchange="toggleAutoCost('edit')" class="mr-2 accent-blue-500 w-4 h-4"> Авто-расчет
+            <div class="border border-gray-200 p-5 rounded-2xl mt-4 bg-gray-50/50">
+                <div class="flex justify-between items-center mb-3">
+                    <label class="block text-[10px] font-black text-blue-600 uppercase tracking-widest">Спецификация</label>
+                    <label class="flex items-center text-xs text-gray-600 cursor-pointer font-bold select-none">
+                        <input type="checkbox" id="autoCostEdit" checked onchange="toggleAutoCost('edit')" class="mr-2 accent-blue-600 w-4 h-4 rounded"> Авто-расчет
                     </label>
                 </div>
                 <div id="bom_rows_edit" class="space-y-2"></div>
-                <button type="button" onclick="addBomRow('edit')" class="text-xs font-bold text-blue-500 hover:underline mt-2"><i class="fas fa-plus"></i> Добавить материал/работу</button>
+                <button type="button" onclick="addBomRow('edit')" class="text-xs font-bold text-blue-600 hover:text-blue-800 transition mt-3 flex items-center"><i class="fas fa-plus mr-1"></i> Добавить материал/работу</button>
             </div>
 
-            <div class="grid grid-cols-3 gap-2 mt-4">
+            <div class="grid grid-cols-3 gap-3 mt-4">
                 {% for i in range(1, 4) %}
-                <div class="relative h-24 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center hover:bg-gray-50 overflow-hidden group">
+                <div class="relative h-28 border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center hover:bg-gray-50 overflow-hidden group transition">
                     <input type="file" name="img{{ i }}" class="absolute inset-0 opacity-0 cursor-pointer z-10" onchange="previewImg(this, 'l_e_i{{ i }}')">
-                    <i class="fas fa-camera text-gray-300 text-xl group-hover:text-blue-400"></i>
+                    <i class="fas fa-camera text-gray-300 text-2xl group-hover:text-blue-500 transition"></i>
                     <img id="l_e_i{{ i }}" class="absolute inset-0 w-full h-full object-cover hidden">
                 </div>
                 {% endfor %}
             </div>
-            <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-xl font-black mt-4">Сохранить изменения</button>
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-black mt-6 shadow-md shadow-blue-200 transition">Сохранить изменения</button>
         </form>
     </div>
 </div>
 
+<!-- JAVASCRIPT (Без изменений логики!) -->
 <script>
     function filterCat(id, btn) {
         document.querySelectorAll('.cat-btn').forEach(b => { b.classList.remove('bg-gray-900', 'text-white', 'active', 'shadow'); b.classList.add('bg-white', 'text-gray-600'); });
@@ -170,18 +204,17 @@
         });
     }
 
-    // УПРАВЛЕНИЕ АВТО-РАСЧЕТОМ
     function toggleAutoCost(type) {
         const isAuto = document.getElementById(`autoCost${type === 'add' ? 'Add' : 'Edit'}`).checked;
         const inp = document.getElementById(`c_cost_${type}`);
         inp.readOnly = isAuto;
         if(isAuto) {
             inp.classList.add('bg-gray-100');
-            inp.classList.remove('bg-white', 'border-blue-300');
+            inp.classList.remove('bg-white', 'border-blue-400');
             calcBom(type);
         } else {
             inp.classList.remove('bg-gray-100');
-            inp.classList.add('bg-white', 'border-blue-300');
+            inp.classList.add('bg-white', 'border-blue-400');
             inp.focus();
         }
     }
@@ -189,13 +222,14 @@
     function addBomRow(type, name='', price='') {
         const div = document.createElement('div');
         div.className = 'flex gap-2 mb-2 items-center';
-        div.innerHTML = `<input type="text" name="bom_name[]" value="${name}" placeholder="Наименование" class="flex-1 bg-gray-50 border p-1.5 rounded-lg text-sm"><input type="number" step="0.01" name="bom_price[]" value="${price}" placeholder="Сумма" class="w-24 bg-gray-50 border p-1.5 rounded-lg text-sm text-right font-bold bom-price-${type}" oninput="calcBom('${type}')"><button type="button" onclick="this.parentElement.remove(); calcBom('${type}')" class="text-gray-400 hover:text-red-500"><i class="fas fa-times"></i></button>`;
+        // ВНИМАНИЕ: Сюда добавлен font-mono и для названий материалов, и для цен
+        div.innerHTML = `<input type="text" name="bom_name[]" value="${name}" placeholder="Наименование" class="flex-1 bg-white border border-gray-200 focus:border-blue-400 p-2 rounded-xl text-sm font-mono outline-none transition"><input type="number" step="0.01" name="bom_price[]" value="${price}" placeholder="Сумма" class="w-28 bg-white border border-gray-200 focus:border-blue-400 p-2 rounded-xl text-sm text-right font-mono font-bold bom-price-${type} outline-none transition" oninput="calcBom('${type}')"><button type="button" onclick="this.parentElement.remove(); calcBom('${type}')" class="text-gray-300 hover:text-red-500 px-2 transition"><i class="fas fa-times"></i></button>`;
         document.getElementById(`bom_rows_${type}`).appendChild(div);
     }
 
     function calcBom(type) {
         const isAuto = document.getElementById(`autoCost${type === 'add' ? 'Add' : 'Edit'}`).checked;
-        if (!isAuto) return; // Если введено вручную, не пересчитываем!
+        if (!isAuto) return; 
         let total = 0;
         document.querySelectorAll(`.bom-price-${type}`).forEach(inp => total += parseFloat(inp.value) || 0);
         document.getElementById(`c_cost_${type}`).value = total;
@@ -240,7 +274,6 @@
             });
         } catch(e) {}
 
-        // Умная проверка: если сохраненная себестоимость не сходится с суммой материалов, значит ты вводил её вручную
         const isManual = Math.abs(bomTotal - parseFloat(cost)) > 0.01;
         document.getElementById('autoCostEdit').checked = !isManual;
         toggleAutoCost('edit');
@@ -264,7 +297,6 @@
         }
     }
 </script>
-
 
 <script>
 // --- УМНЫЙ ИИ ДЛЯ КАТАЛОГА ---
@@ -315,7 +347,7 @@ function attachCatalogAIButtons() {
     if (addDesc && !addDesc.nextElementSibling?.classList.contains('ai-magic-btn')) {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'ai-magic-btn mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest py-2 px-3 rounded-xl transition shadow-md flex items-center justify-center gap-2';
+        btn.className = 'ai-magic-btn mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest py-3 px-3 rounded-xl transition shadow-md flex items-center justify-center gap-2';
         btn.innerHTML = '<i class="fas fa-magic text-yellow-300"></i> Описать нейросетью';
         btn.onclick = function() { generateCatalogDescription(this, addForm); };
         addDesc.parentNode.insertBefore(btn, addDesc.nextSibling);
@@ -326,7 +358,7 @@ function attachCatalogAIButtons() {
     if (editDesc && !editDesc.nextElementSibling?.classList.contains('ai-magic-btn')) {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'ai-magic-btn mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest py-2 px-3 rounded-xl transition shadow-md flex items-center justify-center gap-2';
+        btn.className = 'ai-magic-btn mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest py-3 px-3 rounded-xl transition shadow-md flex items-center justify-center gap-2';
         btn.innerHTML = '<i class="fas fa-magic text-yellow-300"></i> Описать нейросетью';
         btn.onclick = function() { generateCatalogDescription(this, editForm); };
         editDesc.parentNode.insertBefore(btn, editDesc.nextSibling);
