@@ -7,19 +7,36 @@
             <button type="submit" class="bg-blue-600 text-white px-10 py-3.5 rounded-2xl font-black hover:bg-blue-700 transition shadow-md shadow-blue-200 uppercase tracking-widest text-sm">Обновить проект</button>
         </div>
         
-        <div class="grid grid-cols-2 gap-6 bg-white p-8 rounded-3xl shadow-sm border border-gray-100 mb-8 hover:shadow-md transition">
-            <div>
+
+
+<!-- БЛОК ЗАКАЗЧИКА И НАЗВАНИЯ ПРОЕКТА -->
+        <style>
+            /* Стилизуем TomSelect под наш новый дизайн и лечим баг с шириной */
+            .ts-wrapper { width: 100% !important; }
+            .ts-control { border: none !important; border-bottom: 2px solid #f3f4f6 !important; border-radius: 0 !important; padding: 0 0 8px 0 !important; background: transparent !important; font-size: 1.25rem !important; font-weight: 700 !important; box-shadow: none !important; color: #111827 !important; cursor: pointer !important;}
+            .ts-wrapper.focus .ts-control { border-bottom-color: #3b82f6 !important; box-shadow: none !important;}
+            .ts-dropdown { border-radius: 16px !important; border: 1px solid #e5e7eb !important; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important; margin-top: 8px !important; overflow: hidden !important;}
+            .ts-dropdown .option { padding: 12px 16px !important; font-size: 14px !important; font-weight: 500 !important; transition: all 0.2s; }
+            .ts-dropdown .option.active, .ts-dropdown .option:hover { background-color: #eff6ff !important; color: #2563eb !important; font-weight: 700 !important; }
+        </style>
+        
+        <div class="grid grid-cols-2 gap-8 bg-white p-8 rounded-3xl shadow-sm border border-gray-100 mb-8 hover:shadow-md transition">
+            <!-- Класс min-w-0 жестко запрещает колонке растягиваться за свои 50% ширины -->
+            <div class="min-w-0"> 
                 <label class="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest">Заказчик</label>
-                <select name="client_id" id="clientSelect" class="font-medium text-gray-900">
+                <select name="client_id" id="clientSelect" class="w-full">
                     <option value="" {% if not prop[1] %}selected{% endif %}>Не выбран...</option>
                     {% for c in clients %}<option value="{{ c[0] }}" {% if prop[1] == c[0] %}selected{% endif %}>{{ c[1] }}</option>{% endfor %}
                 </select>
             </div>
-            <div>
+            <div class="min-w-0"> 
                 <label class="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest">Название проекта</label>
                 <input type="text" name="project_name" value="{{ prop[3] }}" required class="w-full text-xl font-bold outline-none border-b-2 border-gray-100 focus:border-blue-500 pb-2 transition bg-transparent text-gray-900">
             </div>
         </div>
+
+
+
 
         <div id="blocksList" class="space-y-6">
             {% for b in blocks %}
