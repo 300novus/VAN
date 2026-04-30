@@ -267,61 +267,71 @@
 
 
 <script>
-// --- ИИ ДЛЯ КАТАЛОГА ---
-async function generateCatalogDescription(btnElement) {
-    // Ищем поле с первым фото (обычно name="img1" или id="img1")
-    const imgInput = document.querySelector('input[type="file"][name="img1"]') || document.getElementById('img1');
-    if (!imgInput || !imgInput.files[0]) {
+// --- УМНЫЙ ИИ ДЛЯ КАТАЛОГА ---
+async function generateCatalogDescription(btnElement, formElement) {
+    const imgInput = formElement.querySelector('input[name="img1"]');
+    const imgPreview = formElement.querySelector('img[id^="l_a_i"], img[id^="l_e_i"]');
+    const descField = formElement.querySelector('textarea[name="description"], textarea[id="e_desc"]');
+
+    let fileOrBlob = null;
+
+    if (imgInput && imgInput.files && imgInput.files[0]) {
+        fileOrBlob = imgInput.files[0];
+    } else if (imgPreview && imgPreview.src && !imgPreview.src.endsWith('#') && !imgPreview.src.includes('data:image')) {
+        try {
+            const response = await fetch(imgPreview.src);
+            fileOrBlob = await response.blob();
+        } catch(e) {}
+    }
+
+    if (!fileOrBlob) {
         alert('Сначала загрузите главное фото (Фото 1)!');
         return;
     }
 
-    const descTextarea = document.querySelector('textarea[name="description"]') || document.getElementById('description');
-    if (!descTextarea) {
-        alert('Поле описания не найдено!'); return;
-    }
-
     const originalHtml = btnElement.innerHTML;
-    btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Изучаю дизайн...';
+    btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Пишу текст...';
     btnElement.disabled = true;
-    btnElement.classList.add('opacity-75', 'cursor-not-allowed');
 
     const formData = new FormData();
-    formData.append('image', imgInput.files[0]);
+    formData.append('image', fileOrBlob, 'image.jpg');
 
     try {
         const response = await fetch('/api/ai_describe', { method: 'POST', body: formData });
         const data = await response.json();
-        if (data.text) {
-            // Вставляем крутой концептуальный текст прямо в поле
-            descTextarea.value = data.text;
-        } else {
-            alert('Ошибка ИИ: ' + (data.error || 'Неизвестная ошибка'));
-        }
+        if (data.text) descField.value = data.text;
+        else alert('Ошибка ИИ: ' + (data.error || 'Неизвестная ошибка'));
     } catch (e) {
         alert('Ошибка связи с сервером ИИ');
     } finally {
         btnElement.innerHTML = originalHtml;
         btnElement.disabled = false;
-        btnElement.classList.remove('opacity-75', 'cursor-not-allowed');
     }
 }
 
-// Автоматически рисуем кнопку под полем "Описание" при загрузке страницы
-document.addEventListener('DOMContentLoaded', () => {
-    const descField = document.querySelector('textarea[name="description"]') || document.getElementById('description');
-    if (descField) {
-        const aiBtn = document.createElement('button');
-        aiBtn.type = 'button';
-        aiBtn.className = 'mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest py-2 px-3 rounded-xl transition shadow-md flex items-center justify-center gap-2';
-        aiBtn.innerHTML = '<i class="fas fa-magic text-yellow-300"></i> Описать нейросетью по Фото 1';
-        aiBtn.onclick = function() { generateCatalogDescription(this); };
-        
-        // Вставляем кнопку сразу после поля описания
-        descField.parentNode.insertBefore(aiBtn, descField.nextSibling);
+function attachCatalogAIButtons() {
+    const addForm = document.querySelector('#addModal form');
+    const addDesc = addForm ? addForm.querySelector('textarea[name="description"]') : null;
+    if (addDesc && !addDesc.nextElementSibling?.classList.contains('ai-magic-btn')) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'ai-magic-btn mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest py-2 px-3 rounded-xl transition shadow-md flex items-center justify-center gap-2';
+        btn.innerHTML = '<i class="fas fa-magic text-yellow-300"></i> Описать нейросетью';
+        btn.onclick = function() { generateCatalogDescription(this, addForm); };
+        addDesc.parentNode.insertBefore(btn, addDesc.nextSibling);
     }
-});
+
+    const editForm = document.querySelector('#editModal form');
+    const editDesc = document.getElementById('e_desc');
+    if (editDesc && !editDesc.nextElementSibling?.classList.contains('ai-magic-btn')) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'ai-magic-btn mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest py-2 px-3 rounded-xl transition shadow-md flex items-center justify-center gap-2';
+        btn.innerHTML = '<i class="fas fa-magic text-yellow-300"></i> Описать нейросетью';
+        btn.onclick = function() { generateCatalogDescription(this, editForm); };
+        editDesc.parentNode.insertBefore(btn, editDesc.nextSibling);
+    }
+}
+setInterval(attachCatalogAIButtons, 1000);
 </script>
-
-
 {% endblock %}

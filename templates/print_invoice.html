@@ -1,57 +1,203 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8"><title>Счет №{{ inv[0] }}</title>
+    <meta charset="UTF-8">
+    <title>Счет {{ inv[0] }}</title>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 13px; color: #000; padding: 20px; background: #fff; max-width: 900px; margin: 0 auto;}
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .b-table td, .b-table th { border: 1px solid #000; padding: 4px 6px; vertical-align: top; }
-        .text-center { text-align: center; } .text-right { text-align: right; } .bold { font-weight: bold; }
-        .header-title { font-size: 18px; font-weight: bold; margin: 25px 0 15px 0; border-bottom: 2px solid #000; padding-bottom: 5px; }
-        .info-row { display: flex; margin-bottom: 10px; } .info-label { width: 120px; } .info-value { flex: 1; font-weight: bold; }
-        .totals { width: 400px; float: right; } .totals td { padding: 3px 6px; } .clear { clear: both; }
-        @media print { .no-print { display: none; } body { padding: 0; } }
-        .btn { background: #1a1a1a; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin-bottom: 20px; font-weight: bold;}
+        @page { size: A4; margin: 15mm; }
+        body { 
+            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; 
+            font-size: 13px; 
+            color: #374151; 
+            line-height: 1.5; 
+            -webkit-print-color-adjust: exact; 
+            print-color-adjust: exact; 
+            background: #e5e7eb;
+            padding: 20px 0;
+            margin: 0;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: #fff; 
+            padding: 40px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+        .no-print { text-align: center; margin-bottom: 20px; }
+        .btn { background: #fff; color: #374151; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 0 10px; border: 1px solid #d1d5db; cursor: pointer; display: inline-block;}
+        .btn-primary { background: #2563eb; color: #fff; border: none; }
+        @media print { 
+            .no-print { display: none !important; } 
+            body { background: #fff; padding: 0; }
+            .container { box-shadow: none; padding: 0; max-width: 100%;}
+        }
+
+        /* Header */
+        .header { display: flex; justify-content: space-between; margin-bottom: 40px; border-bottom: 1px solid #e5e7eb; padding-bottom: 25px; }
+        .header-left .doc-type { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;}
+        .header-left .company-name { font-size: 24px; font-weight: 900; color: #111827; margin-bottom: 4px; line-height: 1; }
+        .header-left .company-details { color: #6b7280; font-size: 13px; margin-top: 5px; }
+        
+        .header-right { text-align: right; }
+        .header-right .doc-type { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;}
+        .header-right .doc-number { font-size: 26px; font-weight: 800; color: #2563eb; margin: 0; letter-spacing: 0.5px; line-height: 1; }
+        .header-right .doc-date { color: #6b7280; font-size: 13px; margin-top: 5px;}
+
+
+        /* Parties */
+        .parties { display: flex; justify-content: space-between; margin-bottom: 35px; }
+        .party { width: 48%; }
+        .party-label { font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        .party-name { font-size: 16px; font-weight: 800; color: #111827; margin-bottom: 6px; }
+        .party-details { color: #4b5563; font-size: 13px; line-height: 1.6; }
+
+        /* Info Box */
+        .info-box { background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 10px; padding: 14px 20px; margin-bottom: 35px; font-size: 13px; }
+        
+        /* Table */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
+        th { text-align: left; font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; padding: 14px 10px; border-bottom: 1px solid #e5e7eb; border-top: 1px solid #e5e7eb; background: #f9fafb;}
+        td { padding: 14px 10px; border-bottom: 1px solid #e5e7eb; color: #111827; font-size: 13px; font-family: monospace, monospace; font-size: 14px;}
+        td.item-name { font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; font-size: 13px;}
+        th.text-center, td.text-center { text-align: center; }
+        th.text-right, td.text-right { text-align: right; }
+        td.col-num { color: #9ca3af; font-family: 'Inter', sans-serif; font-size: 12px;}
+
+/* Totals */
+        .totals-wrapper { display: flex; justify-content: flex-end; margin-bottom: 25px; }
+        .totals-table { width: 400px; } /* Увеличили ширину, чтобы влезали миллионы */
+        .totals-table td { border: none; padding: 6px 10px; font-family: monospace, monospace; font-size: 14px; white-space: nowrap; } /* Строго запретили перенос строк */
+        .totals-table td.label-cell { font-family: 'Inter', sans-serif; font-size: 13px; }
+        .totals-table tr.total-row td { border-top: 2px solid #111827; font-weight: 800; font-size: 16px; color: #111827; padding-top: 15px; }
+        .totals-table tr.total-row td.label-cell { font-family: 'Inter', sans-serif; font-weight: 800; text-transform: uppercase;}
+
+        /* Signatures */
+        .signatures { display: flex; justify-content: space-between; margin-top: 70px; position: relative; }
+        .sig-box { width: 45%; display: flex; align-items: flex-end; }
+        .sig-label { color: #4b5563; margin-right: 10px; font-size: 13px; }
+        .sig-line { flex: 1; border-bottom: 1px solid #9ca3af; margin: 0 5px; }
+        .mp-circle { position: absolute; left: 0; top: 35px; width: 80px; height: 80px; border: 2px dashed #d1d5db; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #d1d5db; font-size: 12px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="no-print"><a href="/invoices" class="btn">← Назад</a><button onclick="window.print()" class="btn" style="background:#0056b3; margin-left: 10px;">🖨️ Печать PDF</button></div>
-    <table class="b-table">
-        <tr><td rowspan="2" style="width: 45%;">Бенефициар:<br><span class="bold">{{ s.company_name }}</span><br>БИН: {{ s.company_bin }}</td><td class="text-center" style="width: 35%;">ИИК</td><td class="text-center" style="width: 20%;">Кбе</td></tr>
-        <tr><td class="text-center bold">{{ s.company_iban }}</td><td class="text-center bold">{{ s.company_kbe }}</td></tr>
-        <tr><td>Банк бенефициара:<br>{{ s.company_bank }}</td><td class="text-center">БИК<br><span class="bold">{{ s.company_bik }}</span></td><td class="text-center">Код назначения платежа<br><span class="bold">{{ inv[8] }}</span></td></tr>
-    </table>
-    <div class="header-title">Счет на оплату №{{ inv[0] }} от {{ inv[2] }} г.</div>
-    <div class="info-row"><div class="info-label">Поставщик:</div><div class="info-value">БИН/ИИН {{ s.company_bin }}, {{ s.company_name }}, {{ s.company_address }}</div></div>
-    <div class="info-row"><div class="info-label">Покупатель:</div><div class="info-value">БИН/ИИН {{ client[2] }}, {{ client[1] }}, {{ client[4] }}</div></div>
-    <div class="info-row" style="margin-bottom: 20px;"><div class="info-label bold">Договор:</div><div class="info-value bold">Без договора</div></div>
-    
-    <table class="b-table">
-        <tr><th class="text-center" style="width: 5%;">№</th><th class="text-center">Наименование</th><th class="text-center" style="width: 10%;">Ед. изм.</th><th class="text-center" style="width: 10%;">Кол-во</th><th class="text-center" style="width: 15%;">Цена</th><th class="text-center" style="width: 15%;">Сумма</th></tr>
-        {% for item in items %}
-        <tr>
-            <td class="text-center">{{ loop.index }}</td>
-            <td>{{ item[2] }}</td>
-            <td class="text-center">{{ item[3] }}</td>
-            <td class="text-center">{{ '{:g}'.format(item[4]) }}</td>
-            <td class="text-right">{{ '{:,.2f}'.format(item[5]).replace(',', ' ') }}</td>
-            <td class="text-right">{{ '{:,.2f}'.format(item[6]).replace(',', ' ') }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    
-    <table class="totals">
-        <tr><td class="text-right bold">Итого:</td><td class="text-right bold" style="width: 120px;">{{ '{:,.2f}'.format(inv[3]).replace(',', ' ') }}</td></tr>
-        <tr><td class="text-right bold">В том числе НДС: {{ '{:g}'.format(inv[4]) }} %</td><td class="text-right bold">{{ '{:,.2f}'.format(inv[5]).replace(',', ' ') }}</td></tr>
-        <tr><td class="text-right bold">Всего к оплате:</td><td class="text-right bold">{{ '{:,.2f}'.format(inv[6]).replace(',', ' ') }}</td></tr>
-    </table>
-    <div class="clear"></div>
-    <div style="margin-top: 15px; border-bottom: 2px solid #000; padding-bottom: 5px;">
-        <div>Всего наименований {{ items|length }}, на сумму {{ '{:,.2f}'.format(inv[6]).replace(',', ' ') }} KZT</div>
-        <div class="bold">Всего к оплате: {{ sum_words }}</div>
+    <div class="no-print">
+        <a href="/invoices" class="btn">Назад к счетам</a>
+        <button onclick="window.print()" class="btn btn-primary">Печать в PDF</button>
     </div>
-    <div style="margin-top: 40px; display: flex;">
-        <div class="bold" style="width: 120px;">Исполнитель</div><div style="flex: 1; border-bottom: 1px solid #000; margin-right: 10px; max-width: 200px;"></div><div style="flex: 1; border-bottom: 1px solid #000; max-width: 200px; text-align: center;">/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/</div>
+    
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <div class="doc-type">Бенефициар</div>
+                <div class="company-name">{{ s.company_name }}</div>
+                <div class="company-details">БИН/ИИН {{ s.company_bin }}</div>
+            </div>
+            <div class="header-right">
+                <div class="doc-type">Счёт на оплату</div>
+                <div class="doc-number">№ {{ inv[0] }}</div>
+                <div class="doc-date">от {{ inv[2] }}</div>
+            </div>
+        </div>
+
+        <div class="parties">
+            <div class="party">
+                <div class="party-label">Поставщик</div>
+                <div class="party-name">{{ s.company_name }}</div>
+                <div class="party-details">
+
+                    БИН/ИИН: {{ s.company_bin }}<br>
+                    
+                    {{ s.company_address }}<br>
+                    {{ s.company_bank }}<br>
+                    ИИК: {{ s.company_iban }}<br>
+                    БИК: {{ s.company_bik }}<br>
+КБЕ: {{ s.company_kbe }}
+
+                </div>
+            </div>
+            <div class="party">
+                <div class="party-label">Покупатель</div>
+                <div class="party-name">{{ client[1] }}</div>
+                <div class="party-details">
+                    БИН/ИИН: {{ client[2] }}<br>
+                    {{ client[4] }}
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <span style="display: inline-block; margin-right: 30px;"><span style="color: #6b7280;">Назначение платежа (КНП):</span> <strong>{{ inv[8] }}</strong></span>
+            <span style="display: inline-block;"><span style="color: #6b7280;">Договор:</span> <strong>Без договора</strong></span>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 5%;" class="text-center">№</th>
+                    <th>Наименование товаров / услуг</th>
+                    <th style="width: 8%;" class="text-center">Ед.</th>
+                    <th style="width: 10%;" class="text-center">Кол-во</th>
+                    <th style="width: 18%;" class="text-right">Цена (₸)</th>
+                    <th style="width: 18%;" class="text-right">Сумма (₸)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="text-center col-num">{{ loop.index }}</td>
+                    <td class="item-name">{{ item[2] }}</td>
+                    <td class="text-center item-name">{{ item[3] }}</td>
+                    <td class="text-center">{{ '{:g}'.format(item[4]) }}</td>
+                    <td class="text-right">{{ '{:,.2f}'.format(item[5]).replace(',', ' ') }}</td>
+                    <td class="text-right">{{ '{:,.2f}'.format(item[6]).replace(',', ' ') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="totals-wrapper">
+            <table class="totals-table">
+                <tr>
+                    <td class="text-right label-cell" style="color: #6b7280;">Итого без НДС:</td>
+                    <td class="text-right">{{ '{:,.2f}'.format(inv[3]).replace(',', ' ') }} KZT</td>
+                </tr>
+                <tr>
+                    <td class="text-right label-cell" style="color: #6b7280;">НДС ({{ '{:g}'.format(inv[4]) }}%):</td>
+                    <td class="text-right">{{ '{:,.2f}'.format(inv[5]).replace(',', ' ') }} KZT</td>
+                </tr>
+                <tr class="total-row">
+                    <td class="text-right label-cell">Итого к оплате:</td>
+                    <td class="text-right">{{ '{:,.2f}'.format(inv[6]).replace(',', ' ') }} KZT</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="info-box" style="margin-bottom: 20px;">
+            <div style="margin-bottom: 8px; color: #111827; font-weight: bold;">
+                Всего наименований {{ items|length }}, на сумму {{ '{:,.2f}'.format(inv[6]).replace(',', ' ') }} KZT
+            </div>
+            <div>
+                <span style="color: #111827; font-weight: 800;">Сумма прописью:</span> <span style="color: #6b7280;">{{ sum_words }}</span>
+            </div>
+        </div>
+
+        <div class="signatures">
+            <div class="sig-box">
+                <span class="sig-label">Руководитель:</span>
+                <div class="sig-line"></div>
+                <span style="color: #9ca3af;">/</span>
+                <div class="sig-line"></div>
+                <span style="color: #9ca3af;">/</span>
+            </div>
+            <div class="sig-box">
+                <span class="sig-label">Бухгалтер:</span>
+                <div class="sig-line"></div>
+                <span style="color: #9ca3af;">/</span>
+                <div class="sig-line"></div>
+                <span style="color: #9ca3af;">/</span>
+            </div>
+            <div class="mp-circle">М.П.</div>
+        </div>
     </div>
 </body>
 </html>
