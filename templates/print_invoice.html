@@ -7,12 +7,14 @@
         /* Подключаем наш локальный JetBrains Mono для PDF */
         @import url('{{ url_for("static", filename="fonts/jetbrains-mono.css") }}');
 
-        @page { size: A4; margin: 15mm; }
+        /* Уменьшили поля страницы для экономии места */
+        @page { size: A4; margin: 10mm; }
+        
         body { 
             font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
             font-size: 13px; 
             color: #374151; 
-            line-height: 1.5; 
+            line-height: 1.4; /* Чуть уменьшили межстрочный интервал */
             -webkit-print-color-adjust: exact; 
             print-color-adjust: exact; 
             background: #e5e7eb;
@@ -23,12 +25,13 @@
             max-width: 800px; 
             margin: 0 auto; 
             background: #fff; 
-            padding: 40px;
+            padding: 30px; /* Было 40px */
             box-shadow: 0 10px 25px rgba(0,0,0,0.05);
         }
         .no-print { text-align: center; margin-bottom: 20px; }
         .btn { background: #fff; color: #374151; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 0 10px; border: 1px solid #d1d5db; cursor: pointer; display: inline-block;}
         .btn-primary { background: #2563eb; color: #fff; border: none; }
+        
         @media print { 
             .no-print { display: none !important; } 
             body { background: #fff; padding: 0; }
@@ -40,51 +43,50 @@
             font-family: 'JetBrains Mono', monospace !important;
         }
 
-        /* Header */
-        .header { display: flex; justify-content: space-between; margin-bottom: 40px; border-bottom: 1px solid #e5e7eb; padding-bottom: 25px; }
-        .header-left .doc-type { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;}
-        .header-left .company-name { font-size: 24px; font-weight: 900; color: #111827; margin-bottom: 4px; line-height: 1; }
-        .header-left .company-details { color: #6b7280; font-size: 13px; margin-top: 5px; }
+        /* Header - убрали лишний воздух */
+        .header { display: flex; justify-content: space-between; margin-bottom: 25px; border-bottom: 1px solid #e5e7eb; padding-bottom: 15px; }
+        .header-left .doc-type { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;}
+        .header-left .company-name { font-size: 22px; font-weight: 900; color: #111827; margin-bottom: 2px; line-height: 1; }
+        .header-left .company-details { color: #6b7280; font-size: 12px; margin-top: 4px; }
         
         .header-right { text-align: right; }
-        .header-right .doc-type { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;}
-        .header-right .doc-number { font-size: 26px; font-weight: 800; color: #2563eb; margin: 0; letter-spacing: 0.5px; line-height: 1; }
-        .header-right .doc-date { color: #6b7280; font-size: 13px; margin-top: 5px;}
-
+        .header-right .doc-type { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;}
+        .header-right .doc-number { font-size: 24px; font-weight: 800; color: #2563eb; margin: 0; letter-spacing: 0.5px; line-height: 1; }
+        .header-right .doc-date { color: #6b7280; font-size: 12px; margin-top: 4px;}
 
         /* Parties */
-        .parties { display: flex; justify-content: space-between; margin-bottom: 35px; }
+        .parties { display: flex; justify-content: space-between; margin-bottom: 20px; }
         .party { width: 48%; }
-        .party-label { font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-        .party-name { font-size: 16px; font-weight: 800; color: #111827; margin-bottom: 6px; }
-        .party-details { color: #4b5563; font-size: 13px; line-height: 1.6; }
+        .party-label { font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .party-name { font-size: 15px; font-weight: 800; color: #111827; margin-bottom: 4px; }
+        .party-details { color: #4b5563; font-size: 12px; line-height: 1.4; }
 
         /* Info Box */
-        .info-box { background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 10px; padding: 14px 20px; margin-bottom: 35px; font-size: 13px; }
+        .info-box { background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 8px; padding: 10px 15px; margin-bottom: 20px; font-size: 12px; page-break-inside: avoid; }
         
-        /* Table */
-        table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
-        th { text-align: left; font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; padding: 14px 10px; border-bottom: 1px solid #e5e7eb; border-top: 1px solid #e5e7eb; background: #f9fafb;}
-        td { padding: 14px 10px; border-bottom: 1px solid #e5e7eb; color: #111827; font-size: 13px; font-family: monospace, monospace; font-size: 14px;}
-        td.item-name { font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; font-size: 13px;}
+        /* Table - уплотнили ячейки */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th { text-align: left; font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; padding: 10px 8px; border-bottom: 1px solid #e5e7eb; border-top: 1px solid #e5e7eb; background: #f9fafb;}
+        td { padding: 10px 8px; border-bottom: 1px solid #e5e7eb; color: #111827; font-size: 13px; font-family: monospace, monospace;}
+        td.item-name { font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; font-size: 12px;}
         th.text-center, td.text-center { text-align: center; }
         th.text-right, td.text-right { text-align: right; }
         td.col-num { color: #9ca3af; font-family: 'Inter', sans-serif; font-size: 12px;}
 
-/* Totals */
-        .totals-wrapper { display: flex; justify-content: flex-end; margin-bottom: 25px; }
-        .totals-table { width: 400px; } /* Увеличили ширину, чтобы влезали миллионы */
-        .totals-table td { border: none; padding: 6px 10px; font-family: monospace, monospace; font-size: 14px; white-space: nowrap; } /* Строго запретили перенос строк */
-        .totals-table td.label-cell { font-family: 'Inter', sans-serif; font-size: 13px; }
-        .totals-table tr.total-row td { border-top: 2px solid #111827; font-weight: 800; font-size: 16px; color: #111827; padding-top: 15px; }
+        /* Totals - защита от разрыва */
+        .totals-wrapper { display: flex; justify-content: flex-end; margin-bottom: 15px; page-break-inside: avoid; }
+        .totals-table { width: 400px; } 
+        .totals-table td { border: none; padding: 4px 8px; font-family: monospace, monospace; font-size: 13px; white-space: nowrap; }
+        .totals-table td.label-cell { font-family: 'Inter', sans-serif; font-size: 12px; }
+        .totals-table tr.total-row td { border-top: 2px solid #111827; font-weight: 800; font-size: 15px; color: #111827; padding-top: 10px; }
         .totals-table tr.total-row td.label-cell { font-family: 'Inter', sans-serif; font-weight: 800; text-transform: uppercase;}
 
-        /* Signatures */
-        .signatures { display: flex; justify-content: space-between; margin-top: 70px; position: relative; }
+        /* Signatures - подтянули выше и запретили разрывать! */
+        .signatures { display: flex; justify-content: space-between; margin-top: 30px; position: relative; page-break-inside: avoid; }
         .sig-box { width: 45%; display: flex; align-items: flex-end; }
-        .sig-label { color: #4b5563; margin-right: 10px; font-size: 13px; }
+        .sig-label { color: #4b5563; margin-right: 10px; font-size: 12px; }
         .sig-line { flex: 1; border-bottom: 1px solid #9ca3af; margin: 0 5px; }
-        .mp-circle { position: absolute; left: 0; top: 35px; width: 80px; height: 80px; border: 2px dashed #d1d5db; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #d1d5db; font-size: 12px; font-weight: bold; }
+        .mp-circle { position: absolute; left: 0; top: 25px; width: 70px; height: 70px; border: 2px dashed #d1d5db; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #d1d5db; font-size: 11px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -112,15 +114,12 @@
                 <div class="party-label">Поставщик</div>
                 <div class="party-name">{{ s.company_name }}</div>
                 <div class="party-details">
-
                     БИН/ИИН: {{ s.company_bin }}<br>
-                    
                     {{ s.company_address }}<br>
                     {{ s.company_bank }}<br>
                     ИИК: {{ s.company_iban }}<br>
                     БИК: {{ s.company_bik }}<br>
-КБЕ: {{ s.company_kbe }}
-
+                    КБЕ: {{ s.company_kbe }}
                 </div>
             </div>
             <div class="party">

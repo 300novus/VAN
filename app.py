@@ -538,16 +538,64 @@ def delete_knp(code):
     with sqlite3.connect(DB_NAME) as conn: conn.cursor().execute("DELETE FROM knp_directory WHERE code = ?", (code,)); conn.commit()
     return jsonify(success=True)
 
+
+
+
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
     with sqlite3.connect(DB_NAME) as conn:
         c = conn.cursor()
         if request.method == 'POST':
-            for k in ['company_name', 'company_bin', 'company_bank', 'company_iban', 'company_address', 'company_bik', 'company_kbe']: c.execute("UPDATE settings SET value=? WHERE key=?", (request.form.get(k), k))
+            # 1. Сохраняем обычные настройки и промпт в БД
+            keys = ['company_name', 'company_bin', 'company_bank', 'company_iban', 'company_address', 'company_bik', 'company_kbe', 'ai_model', 'ai_prompt']
+            for k in keys:
+                val = request.form.get(k)
+                if val is not None:
+                    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (k, val))
             conn.commit()
+            
+            # 2. Сохраняем API-ключ в файл api_key.txt и обновляем ИИ на лету
+            new_key = request.form.get('api_key')
+            if new_key is not None:
+                with open('api_key.txt', 'w', encoding='utf-8') as f:
+                    f.write(new_key.strip())
+                genai.configure(api_key=new_key.strip())
+                
             return redirect(url_for('settings'))
+            
         sets = {r[0]: r[1] for r in c.execute("SELECT * FROM settings").fetchall()}
-    return render_template('settings.html', s=sets)
+        
+    # Читаем текущий API-ключ из файла для отображения
+    current_api_key = ""
+    try:
+        with open('api_key.txt', 'r', encoding='utf-8') as f:
+            current_api_key = f.read().strip()
+    except FileNotFoundError:
+        pass
+
+    # Задаем базовый промпт, если он еще не сохранен в базе
+    if 'ai_prompt' not in sets or not sets['ai_prompt']:
+        sets['ai_prompt'] = (
+            "Ты — концептуальный промышленный дизайнер и архитектурный критик. "
+            "Твоя задача — описать это изделие (МАФ) глубоко, метафорично и со вкусом, "
+            "раскрывая философию его дизайна.\n"
+            "Посмотри на фото и выполни следующее:\n"
+            "1. Назови объект (пергола, урна, скамейка, качели и т.д.), но подай это как арт-объект.\n"
+            "2. Найди интересную ассоциацию для его формы. С чем это перекликается?\n"
+            "3. Опиши гармонию материалов: металл и дерево.\n"
+            "4. КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО использовать рекламные штампы ('премиальный статус', 'выгодное решение').\n"
+            "Напиши 3-4 предложения. Выведи ТОЛЬКО текст."
+        )
+
+    try:
+        available_models = [m.name.replace('models/', '') for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+    except Exception:
+        available_models = ['gemini-1.5-flash', 'gemini-1.5-pro']
+        
+    return render_template('settings.html', s=sets, available_models=available_models, current_api_key=current_api_key)
+
+
+
 
 @app.route('/print/<id>')
 def print_invoice(id):
@@ -610,52 +658,16 @@ def ai_describe():
         file = request.files['image']
         img = PIL.Image.open(io.BytesIO(file.read()))
         
-# АРХИТЕКТУРНЫЙ И КОНЦЕПТУАЛЬНЫЙ ПРОМПТ
-        prompt = (
-            "Ты — концептуальный промышленный дизайнер и архитектурный критик. "
-            "Твоя задача — описать это изделие (МАФ) глубоко, метафорично и со вкусом, "
-            "раскрывая философию его дизайна.\n"
-            "Посмотри на фото и выполни следующее:\n"
-            "1. Назови объект (пергола, урна, скамейка, качели и т.д.), но подай это как арт-объект.\n"
-            "2. Найди интересную ассоциацию для его формы. С чем это перекликается? "
-            "(Например: отсылка к природной бионике, динамика мегаполиса, строгая геометрия оригами, "
-            "парящий силуэт, переосмысление традиционных форм).\n"
-            "3. Опиши гармонию материалов: как тяжесть и брутальность металла контрастируют с теплой, "
-            "живой фактурой дерева.\n"
-            "4. КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО использовать рекламные штампы ('премиальный статус', 'идеальный выбор', "
-            "'покупайте', 'выгодное решение'). Текст должен звучать благородно и дорого, как аннотация "
-            "к экспонату на выставке современного дизайна.\n"
-            "Напиши 3-4 предложения. Выведи ТОЛЬКО текст."
-        )
-        
-        # Получаем СПИСОК ВСЕХ МОДЕЛЕЙ, которые РЕАЛЬНО доступны твоему ключу прямо сейчас
-        available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        print(f"\n[АВТОДИАГНОСТИКА] Доступные модели от Google: {available_models}\n")
-        
-        # Ищем самую подходящую
-        model_name = None
-        for m in available_models:
-            if '1.5-flash' in m:
-                model_name = m
-                break
-        
-        if not model_name:
-            for m in available_models:
-                if 'vision' in m or '1.5' in m:
-                    model_name = m
-                    break
-                    
-        if not model_name and available_models:
-            model_name = available_models[0] # Если ничего не подошло, берем первую разрешенную
+        # Достаем модель и промпт из базы данных
+        with sqlite3.connect(DB_NAME) as conn:
+            model_setting = conn.cursor().execute("SELECT value FROM settings WHERE key='ai_model'").fetchone()
+            model_name = model_setting[0] if model_setting and model_setting[0] else 'gemini-1.5-flash'
             
-        if not model_name:
-            return jsonify({'error': 'Ключ не имеет доступа к моделям генерации'}), 500
-            
-        # Очищаем префикс 'models/', так как GenerativeModel принимает имя без него
-        clean_model_name = model_name.replace('models/', '')
-        print(f"[АВТОДИАГНОСТИКА] Выбрана рабочая модель: {clean_model_name}")
+            prompt_setting = conn.cursor().execute("SELECT value FROM settings WHERE key='ai_prompt'").fetchone()
+            # Если в базе пусто, используем резервный промпт
+            prompt = prompt_setting[0] if prompt_setting and prompt_setting[0] else "Опиши этот МАФ как профессиональный дизайнер. 3-4 предложения."
         
-        model = genai.GenerativeModel(clean_model_name)
+        model = genai.GenerativeModel(model_name)
         response = model.generate_content([img, prompt])
         
         if not response.text:
@@ -664,7 +676,7 @@ def ai_describe():
         return jsonify({'text': response.text})
         
     except Exception as e:
-        print(f"Критическая ошибка ИИ: {e}")
+        print(f"Ошибка ИИ: {e}")
         return jsonify({'error': str(e)}), 500
 # ----------------
 

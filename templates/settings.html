@@ -1,24 +1,117 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="p-10 max-w-4xl mx-auto">
-    <h2 class="text-3xl font-black text-gray-900 mb-8">Реквизиты компании</h2>
-    <div class="bg-white p-10 rounded-3xl shadow-sm border border-gray-100">
-        <form method="POST" class="space-y-6">
-            <div class="grid grid-cols-2 gap-6">
-                <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Бенефициар (Наименование)</label><input type="text" name="company_name" value="{{ s.company_name }}" class="w-full bg-gray-50 p-3 rounded-xl font-bold"></div>
-                <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">БИН / ИИН</label><input type="text" name="company_bin" value="{{ s.company_bin }}" class="w-full bg-gray-50 p-3 rounded-xl font-bold"></div>
+<div class="p-10 max-w-4xl mx-auto pb-20">
+    <div class="mb-8">
+        <h2 class="text-3xl font-black text-gray-900 tracking-tight">Настройки системы</h2>
+        <p class="text-gray-500 mt-2 text-sm">Управление реквизитами и параметрами нейросети</p>
+    </div>
+    
+    <div class="bg-white p-10 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition">
+        <form method="POST" class="space-y-8">
+            
+            <!-- СЕКЦИЯ 1: Реквизиты компании -->
+            <div>
+                <h3 class="text-xl font-black text-gray-900 mb-6 flex items-center"><i class="fas fa-building text-blue-500 mr-3"></i>Реквизиты компании</h3>
+                <div class="space-y-5">
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest">Бенефициар (Наименование)</label>
+                            <input type="text" name="company_name" value="{{ s.company_name }}" class="w-full bg-gray-50 border border-gray-100 p-3.5 rounded-xl font-bold text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest">БИН / ИИН</label>
+                            <input type="text" name="company_bin" value="{{ s.company_bin }}" class="w-full bg-gray-50 border border-gray-100 p-3.5 rounded-xl font-bold font-mono text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest">Банк бенефициар</label>
+                            <input type="text" name="company_bank" value="{{ s.company_bank }}" class="w-full bg-gray-50 border border-gray-100 p-3.5 rounded-xl font-bold text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest">БИК</label>
+                            <input type="text" name="company_bik" value="{{ s.company_bik }}" class="w-full bg-gray-50 border border-gray-100 p-3.5 rounded-xl font-bold font-mono text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest">ИИК (IBAN)</label>
+                        <input type="text" name="company_iban" value="{{ s.company_iban }}" class="w-full bg-gray-50 border border-gray-100 p-3.5 rounded-xl font-bold font-mono text-lg tracking-wider text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-6 items-start">
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest">Кбе</label>
+                            <input type="text" name="company_kbe" value="{{ s.company_kbe }}" class="w-full bg-gray-50 border border-gray-100 p-3.5 rounded-xl font-bold text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition">
+                        </div>
+                        <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                            <p class="text-xs text-blue-600 font-medium leading-relaxed"><i class="fas fa-info-circle mr-1.5"></i> КНП выбирается отдельно при создании каждого счета из Справочника КНП.</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest">Юридический адрес</label>
+                        <input type="text" name="company_address" value="{{ s.company_address }}" class="w-full bg-gray-50 border border-gray-100 p-3.5 rounded-xl font-bold text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition">
+                    </div>
+                </div>
             </div>
-            <div class="grid grid-cols-2 gap-6">
-                <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Банк бенефициар</label><input type="text" name="company_bank" value="{{ s.company_bank }}" class="w-full bg-gray-50 p-3 rounded-xl font-bold"></div>
-                <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">БИК</label><input type="text" name="company_bik" value="{{ s.company_bik }}" class="w-full bg-gray-50 p-3 rounded-xl font-bold font-mono"></div>
+
+            <div class="w-full h-px bg-gray-100 my-8"></div>
+
+            <!-- СЕКЦИЯ 2: Настройки Нейросети -->
+            <div>
+                <h3 class="text-xl font-black text-gray-900 mb-6 flex items-center"><i class="fas fa-brain text-purple-500 mr-3"></i>Интеллект системы (ИИ)</h3>
+                
+                <div class="space-y-6">
+                    <!-- API Ключ -->
+                    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                        <div class="flex justify-between items-end mb-3">
+                            <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest">API Ключ Google Gemini</label>
+                            <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center transition">
+                                <i class="fas fa-external-link-alt mr-1.5"></i> Получить ключ бесплатно
+                            </a>
+                        </div>
+                        <input type="password" name="api_key" value="{{ current_api_key }}" placeholder="AIzaSyB..." class="w-full bg-gray-50 border border-gray-100 p-3.5 rounded-xl font-mono text-sm outline-none focus:bg-white focus:border-blue-500 transition text-gray-900">
+                    </div>
+
+                    <!-- Выбор модели -->
+                    <div class="bg-gradient-to-br from-purple-50 to-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+                        <label class="block text-[10px] font-black text-purple-600 uppercase mb-2 tracking-widest">Модель для описания товаров</label>
+                        <div class="relative">
+                            <select name="ai_model" class="w-full bg-white border border-purple-200 p-4 rounded-xl font-bold text-gray-900 font-mono outline-none focus:border-purple-500 transition shadow-sm appearance-none cursor-pointer">
+                                {% for model in available_models %}
+                                    <option value="{{ model }}" {% if s.ai_model == model %}selected{% endif %}>{{ model }}</option>
+                                {% endfor %}
+                                {% if not available_models %}
+                                    <option value="gemini-1.5-flash" {% if s.ai_model == 'gemini-1.5-flash' %}selected{% endif %}>gemini-1.5-flash</option>
+                                    <option value="gemini-1.5-pro" {% if s.ai_model == 'gemini-1.5-pro' %}selected{% endif %}>gemini-1.5-pro</option>
+                                {% endif %}
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-purple-500">
+                                <i class="fas fa-chevron-down text-sm"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Системный промпт -->
+                    <div class="bg-gray-50 p-6 rounded-2xl border border-gray-200 shadow-sm">
+                        <label class="block text-[10px] font-black text-gray-500 uppercase mb-3 tracking-widest flex items-center">
+                            <i class="fas fa-robot text-gray-400 mr-2"></i> Характер и инструкции для ИИ (Промпт)
+                        </label>
+                        <textarea name="ai_prompt" rows="8" class="w-full bg-white border border-gray-200 p-4 rounded-xl text-sm leading-relaxed text-gray-700 outline-none focus:border-blue-500 transition shadow-inner resize-y">{{ s.ai_prompt }}</textarea>
+                        <p class="text-[11px] text-gray-400 mt-3 font-medium">Это задание ИИ читает перед тем, как описать загруженную фотографию. Вы можете добавлять сюда свои правила и нюансы.</p>
+                    </div>
+                </div>
             </div>
-            <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">ИИК (IBAN)</label><input type="text" name="company_iban" value="{{ s.company_iban }}" class="w-full bg-gray-50 p-3 rounded-xl font-bold font-mono text-lg tracking-wider"></div>
-            <div class="grid grid-cols-2 gap-6">
-                <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Кбе</label><input type="text" name="company_kbe" value="{{ s.company_kbe }}" class="w-full bg-gray-50 p-3 rounded-xl font-bold"></div>
-                <div><p class="text-xs text-gray-400 mt-6">КНП выбирается отдельно при создании каждого счета из Справочника КНП.</p></div>
+
+            <!-- Кнопка сохранения -->
+            <div class="pt-6 border-t border-gray-100">
+                <button type="submit" class="w-full bg-blue-600 text-white px-10 py-4 rounded-xl font-black shadow-md shadow-blue-200 hover:bg-blue-700 transition uppercase tracking-widest text-sm flex items-center justify-center gap-2">
+                    <i class="fas fa-save"></i> Сохранить все настройки
+                </button>
             </div>
-            <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Юридический адрес</label><input type="text" name="company_address" value="{{ s.company_address }}" class="w-full bg-gray-50 p-3 rounded-xl font-bold"></div>
-            <div class="pt-6"><button type="submit" class="bg-black text-white px-10 py-4 rounded-xl font-bold shadow-xl hover:bg-gray-800 transition">Сохранить реквизиты</button></div>
         </form>
     </div>
 </div>
