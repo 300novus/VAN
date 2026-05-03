@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="p-10 max-w-7xl mx-auto pb-32">
+    <div class="flex justify-between items-end mb-8">
+        <div>
+            <h2 class="text-3xl font-black text-gray-900 tracking-tight">Поставщики и Прайсы</h2>
+            <p class="text-gray-500 mt-2 text-sm">Управление базой поставщиков сырья и источниками актуальных цен.</p>
+        </div>
+        <button onclick="openSupplierModal()" class="bg-blue-600 text-white px-8 py-3.5 rounded-2xl font-black hover:bg-blue-700 transition shadow-md shadow-blue-200 uppercase tracking-widest text-sm flex items-center gap-2">
+            <i class="fas fa-plus"></i> Добавить поставщика
+        </button>
+    </div>
+
+    <!-- Сетка карточек поставщиков -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for s in suppliers %}
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-200 transition group relative flex flex-col justify-between">
+            
+            <div class="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition flex space-x-2">
+                <button onclick="editSupplier('{{ s[0] }}', '{{ s[1] }}', '{{ s[2] }}', '{{ s[3] }}')" class="w-8 h-8 bg-gray-50 hover:bg-blue-50 text-gray-400 hover:text-blue-600 rounded-xl flex items-center justify-center transition shadow-sm"><i class="fas fa-pen text-xs"></i></button>
+                <button onclick="deleteSupplier('{{ s[0] }}')" class="w-8 h-8 bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-xl flex items-center justify-center transition shadow-sm"><i class="fas fa-trash text-xs"></i></button>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-black text-gray-900 mb-1 pr-16">{{ s[1] }}</h3>
+                <p class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-5"><i class="fas fa-address-book mr-1"></i> {{ s[2] if s[2] else 'Контакты не указаны' }}</p>
+
+                <div class="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 mb-6">
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Источник прайса</p>
+                    {% if s[3] %}
+                        <a href="{{ s[3] }}" target="_blank" class="text-sm font-mono text-blue-600 hover:text-blue-800 hover:underline truncate block w-full transition" title="{{ s[3] }}"><i class="fas fa-link mr-1.5"></i> Ссылка сохранена</a>
+                    {% else %}
+                        <span class="text-sm text-gray-400 italic font-medium">Ссылка не указана</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center border-t border-gray-100 pt-5">
+                <div class="flex flex-col">
+                    <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Синхронизация</span>
+                    <span class="text-xs font-bold text-gray-900">{{ s[4] }}</span>
+                </div>
+                <!-- ВОТ ЗДЕСЬ ИСПРАВЛЕННАЯ КНОПКА С ФУНКЦИЕЙ ONCLICK -->
+                <button onclick="openParseModal('{{ s[0] }}', '{{ s[1] }}')" class="bg-gray-900 text-white px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-black transition shadow-sm hover:shadow-md flex items-center gap-1.5">
+                    <i class="fas fa-sync-alt"></i> Спарсить
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+        
+        {% if not suppliers %}
+        <div class="col-span-full py-20 text-center bg-white rounded-3xl border border-dashed border-gray-200">
+            <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300 text-3xl"><i class="fas fa-truck-loading"></i></div>
+            <h3 class="text-lg font-black text-gray-900 mb-1">Нет поставщиков</h3>
+            <p class="text-sm text-gray-500">Добавьте базу компаний, чтобы отслеживать цены на металл.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Модальное окно добавления/редактирования поставщика -->
+<div id="supplierModal" class="fixed inset-0 bg-gray-900/50 hidden items-center justify-center backdrop-blur-sm z-50 transition-opacity">
+    <div class="bg-white p-8 rounded-3xl w-[500px] shadow-2xl border border-gray-100">
+        <div class="flex justify-between items-center mb-6">
+            <h3 id="modalTitle" class="text-2xl font-black text-gray-900">Новый поставщик</h3>
+            <button onclick="closeSupplierModal()" class="text-gray-400 hover:text-gray-900 transition bg-gray-50 hover:bg-gray-100 w-10 h-10 rounded-full flex items-center justify-center"><i class="fas fa-times"></i></button>
+        </div>
+        <form id="supplierForm" class="space-y-5">
+            <input type="hidden" id="sup_id">
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest">Название компании</label>
+                <input type="text" id="sup_name" required class="w-full bg-gray-50 border border-gray-100 p-3.5 rounded-xl font-bold text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition shadow-sm" placeholder="Например: Лидер Металл">
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest">Контакты (Тел / Менеджер)</label>
+                <input type="text" id="sup_contact" class="w-full bg-gray-50 border border-gray-100 p-3.5 rounded-xl font-bold text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition shadow-sm" placeholder="+7 (XXX) ...">
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest">Ссылка на прайс (URL)</label>
+                <input type="url" id="sup_url" class="w-full bg-gray-50 border border-gray-100 p-3.5 rounded-xl font-mono text-sm text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition shadow-sm" placeholder="https://...">
+            </div>
+            <div class="pt-4">
+                <button type="submit" class="w-full bg-blue-600 text-white px-6 py-4 rounded-xl font-black shadow-md hover:bg-blue-700 transition uppercase tracking-widest text-sm">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Модальное окно Парсинга (АВТОМАТИКА) -->
+<div id="parseModal" class="fixed inset-0 bg-gray-900/60 hidden items-center justify-center backdrop-blur-sm z-50 transition-opacity">
+    <div class="bg-white p-8 rounded-3xl w-[450px] shadow-2xl border border-gray-100 relative">
+        
+        <!-- Анимация загрузки -->
+        <div id="loadingOverlay" class="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-3xl hidden flex-col items-center justify-center z-10">
+            <i class="fas fa-satellite-dish text-blue-500 text-4xl mb-4 animate-bounce"></i>
+            <p class="text-sm font-black text-gray-900 uppercase tracking-widest text-center mb-1">Соединение с сервером...</p>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest animate-pulse">Скачивание и ИИ-анализ прайса</p>
+        </div>
+
+        <div class="text-center mb-6 pt-4">
+            <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                <i class="fas fa-robot"></i>
+            </div>
+            <h3 class="text-2xl font-black text-gray-900">Запуск сканирования</h3>
+            <p class="text-sm font-bold text-gray-500 mt-2">Поставщик: <span id="parseSupplierName" class="text-blue-600 uppercase tracking-widest"></span></p>
+        </div>
+        
+        <input type="hidden" id="parse_sup_id">
+        
+        <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-6 text-center">
+            <p class="text-xs text-gray-600 font-medium">Система автоматически скачает PDF по сохраненной ссылке и извлечет актуальные цены.</p>
+        </div>
+
+        <div class="flex gap-4">
+            <button onclick="closeParseModal()" class="w-1/3 bg-gray-100 text-gray-600 px-4 py-3.5 rounded-xl font-bold hover:bg-gray-200 transition text-sm">Отмена</button>
+            <button onclick="startAiParsing()" class="w-2/3 bg-gray-900 text-white px-4 py-3.5 rounded-xl font-black shadow-lg hover:bg-black transition uppercase tracking-widest text-sm flex items-center justify-center gap-2">
+                <i class="fas fa-bolt text-yellow-400"></i> Спарсить цены
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Скрипты для добавления/редактирования поставщика ---
+    const modal = document.getElementById('supplierModal');
+    const form = document.getElementById('supplierForm');
+
+    function openSupplierModal() {
+        document.getElementById('modalTitle').innerText = 'Новый поставщик';
+        document.getElementById('sup_id').value = '';
+        form.reset();
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeSupplierModal() {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    function editSupplier(id, name, contact, url) {
+        document.getElementById('modalTitle').innerText = 'Редактирование';
+        document.getElementById('sup_id').value = id;
+        document.getElementById('sup_name').value = name;
+        document.getElementById('sup_contact').value = contact;
+        document.getElementById('sup_url').value = url;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    async function deleteSupplier(id) {
+        if(confirm('Точно удалить поставщика и всю историю его цен?')) {
+            await fetch(`/api/delete_supplier/${id}`, { method: 'POST' });
+            window.location.reload();
+        }
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('sup_id').value;
+        const data = {
+            id: id,
+            name: document.getElementById('sup_name').value,
+            contact: document.getElementById('sup_contact').value,
+            price_url: document.getElementById('sup_url').value
+        };
+        const endpoint = id ? '/api/edit_supplier' : '/api/add_supplier';
+        
+        await fetch(endpoint, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        window.location.reload();
+    });
+
+    // --- Скрипты для умного парсинга ---
+    const pModal = document.getElementById('parseModal');
+    
+    function openParseModal(id, name) {
+        document.getElementById('parse_sup_id').value = id;
+        document.getElementById('parseSupplierName').innerText = name;
+        pModal.classList.remove('hidden');
+        pModal.classList.add('flex');
+    }
+
+    function closeParseModal() {
+        pModal.classList.add('hidden');
+        pModal.classList.remove('flex');
+    }
+
+    async function startAiParsing() {
+        const id = document.getElementById('parse_sup_id').value;
+
+        // Включаем анимацию
+        document.getElementById('loadingOverlay').classList.remove('hidden');
+        document.getElementById('loadingOverlay').classList.add('flex');
+
+        try {
+            const response = await fetch(`/api/parse_supplier/${id}`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                alert(`Успех! Распознано позиций: ${data.found}. Цены сохранены на склад.`);
+                window.location.reload();
+            } else {
+                alert('Ошибка: ' + data.error);
+                document.getElementById('loadingOverlay').classList.add('hidden');
+                document.getElementById('loadingOverlay').classList.remove('flex');
+            }
+        } catch (e) {
+            alert('Произошла системная ошибка при связи с сервером.');
+            document.getElementById('loadingOverlay').classList.add('hidden');
+            document.getElementById('loadingOverlay').classList.remove('flex');
+        }
+    }
+</script>
+{% endblock %}

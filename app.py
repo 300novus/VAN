@@ -1,4 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
+import requests
+import fitz  # Библиотека PyMuPDF
 import sqlite3
 import time
 import os
@@ -84,10 +86,16 @@ def init_db():
         except: pass
         try: c.execute("ALTER TABLE catalog ADD COLUMN bom_json TEXT")
         except: pass
+        
+        # --- НОВЫЕ ТАБЛИЦЫ ДЛЯ ПОСТАВЩИКОВ ---
+        c.execute('CREATE TABLE IF NOT EXISTS suppliers (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, contact TEXT, price_url TEXT, last_updated TEXT)')
+        c.execute('CREATE TABLE IF NOT EXISTS price_history (id INTEGER PRIMARY KEY AUTOINCREMENT, supplier_id INTEGER, item_name TEXT, unit TEXT, price REAL, date TEXT)')
+
         c.execute("SELECT COUNT(*) FROM categories")
         if c.fetchone()[0] == 0:
             defaults = [('Скамейки', 'fa-chair'), ('Урны', 'fa-trash-alt'), ('Освещение', 'fa-lightbulb'), ('Прочее', 'fa-cube')]
             for n, i in defaults: c.execute("INSERT INTO categories (name, icon) VALUES (?, ?)", (n, i))
+            
         defaults_sets = [('company_name', 'ИП "ЧИНГИЗХАН"'), ('company_bin', '881221301113'), ('company_bank', 'АО "ForteBank"'), ('company_iban', 'KZ1796502F0021560313KZT'), ('company_address', 'г. Алматы'), ('company_bik', 'IRTYKZKA'), ('company_kbe', '19')]
         for key, val in defaults_sets: c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)", (key, val))
         conn.commit()
@@ -168,9 +176,20 @@ def catalog_list():
 def add_catalog():
     name, desc, unit, cat_id = request.form.get('name'), request.form.get('description'), request.form.get('unit', 'шт.'), request.form.get('category_id', 0)
     cost, retail = s_float(request.form.get('cost')), s_float(request.form.get('retail_price'))
-    bom_names, bom_prices = request.form.getlist('bom_name[]'), request.form.getlist('bom_price[]')
-    bom = [{'name': bom_names[i], 'price': s_float(bom_prices[i])} for i in range(len(bom_names))]
+    
+    bom_names = request.form.getlist('bom_name[]')
+    bom_units = request.form.getlist('bom_unit[]')
+    bom_qtys = request.form.getlist('bom_qty[]')
+    bom_prices = request.form.getlist('bom_price[]')
+    
+    bom = []
+    for i in range(len(bom_names)):
+        unit_str = bom_units[i] if i < len(bom_units) else 'шт.'
+        qty_val = s_float(bom_qtys[i]) if i < len(bom_qtys) else 1.0
+        price_val = s_float(bom_prices[i]) if i < len(bom_prices) else 0.0
+        bom.append({'name': bom_names[i], 'unit': unit_str, 'qty': qty_val, 'price': price_val})
     bom_json = json.dumps(bom, ensure_ascii=False)
+    
     t = int(time.time()*1000)
     i1, i2, i3 = save_file(request.files.get('img1'), f"cat_{t}_1"), save_file(request.files.get('img2'), f"cat_{t}_2"), save_file(request.files.get('img3'), f"cat_{t}_3")
     with sqlite3.connect(DB_NAME) as conn:
@@ -182,9 +201,20 @@ def add_catalog():
 def edit_catalog():
     item_id, name, desc, unit, cat_id = request.form.get('item_id'), request.form.get('name'), request.form.get('description'), request.form.get('unit'), request.form.get('category_id', 0)
     cost, retail = s_float(request.form.get('cost')), s_float(request.form.get('retail_price'))
-    bom_names, bom_prices = request.form.getlist('bom_name[]'), request.form.getlist('bom_price[]')
-    bom = [{'name': bom_names[i], 'price': s_float(bom_prices[i])} for i in range(len(bom_names))]
+    
+    bom_names = request.form.getlist('bom_name[]')
+    bom_units = request.form.getlist('bom_unit[]')
+    bom_qtys = request.form.getlist('bom_qty[]')
+    bom_prices = request.form.getlist('bom_price[]')
+    
+    bom = []
+    for i in range(len(bom_names)):
+        unit_str = bom_units[i] if i < len(bom_units) else 'шт.'
+        qty_val = s_float(bom_qtys[i]) if i < len(bom_qtys) else 1.0
+        price_val = s_float(bom_prices[i]) if i < len(bom_prices) else 0.0
+        bom.append({'name': bom_names[i], 'unit': unit_str, 'qty': qty_val, 'price': price_val})
     bom_json = json.dumps(bom, ensure_ascii=False)
+    
     with sqlite3.connect(DB_NAME) as conn:
         c = conn.cursor()
         item = c.execute("SELECT img1, img2, img3 FROM catalog WHERE id=?", (item_id,)).fetchone()
@@ -265,6 +295,7 @@ def create_proposal():
             return redirect(url_for('proposals_list'))
         clients = c.execute("SELECT id, name FROM clients ORDER BY name").fetchall()
     return render_template('create_proposal.html', clients=clients, json=json)
+
 @app.route('/edit_proposal/<prop_id>', methods=['GET', 'POST'])
 def edit_proposal(prop_id):
     with sqlite3.connect(DB_NAME) as conn:
@@ -277,7 +308,6 @@ def edit_proposal(prop_id):
             
             block_ids = request.form.getlist('block_ids[]')
             
-            # ДОБАВЛЕНО: Создаем счетчик новой суммы
             total = 0 
             
             for order, bid in enumerate(block_ids):
@@ -289,30 +319,22 @@ def edit_proposal(prop_id):
                 unit = request.form.get(f'unit_{bid}', 'шт.')
                 cost = request.form.get(f'cost_{bid}', 0)
                 
-                # ДОБАВЛЕНО: Если это товар, плюсуем к итоговой сумме
                 if b_type == 'product':
                     total += float(qty) * float(price)
                 
-# Сохраняем картинки (ИСПРАВЛЕНО ДЛЯ КАТАЛОГА)
                 def save_img(idx):
-                    # 1. Если загружен новый файл руками
                     f = request.files.get(f'img{idx}_{bid}')
                     if f and f.filename:
                         fn = f"pr_{prop_id}_{bid}_{idx}_{int(time.time()*1000)}.png"
                         f.save(os.path.join(app.config['UPLOAD_FOLDER'], fn))
                         return fn
-                    
-                    # 2. Если блок добавлен из каталога (копируем фото каталога)
                     cat_img = request.form.get(f'cat_img{idx}_{bid}')
                     if cat_img:
                         return copy_file(cat_img, f"pr_{prop_id}_{bid}_cat{idx}")
-                        
-                    # 3. Если ничего не меняли, сохраняем старое фото
                     return request.form.get(f'old_img{idx}_{bid}', '')
                 
                 i1, i2, i3 = save_img(1), save_img(2), save_img(3)
                 
-                # Собираем JSON
                 items_json = "{}"
                 if b_type == 'cover':
                     items_json = json.dumps({'angle': request.form.get(f'cov_angle_{bid}', 10), 'gap': request.form.get(f'cov_gap_{bid}', 5), 'grad': request.form.get(f'cov_grad_{bid}', 70), 'color': request.form.get(f'cov_color_{bid}', '#ffffff'), 'shadow': request.form.get(f'cov_shadow_{bid}', 'on'), 'top_text': request.form.get(f'cov_top_{bid}', '')})
@@ -325,7 +347,6 @@ def edit_proposal(prop_id):
                     man_prices = request.form.getlist(f'man_price_{bid}[]')
                     rows = [{'title': man_titles[i], 'unit': man_units[i], 'qty': man_qtys[i], 'price': man_prices[i]} for i in range(len(man_titles))]
                     
-                    # ДОБАВЛЕНО: Считаем сумму для таблицы-спецификации
                     for i in range(len(man_titles)):
                         total += float(man_qtys[i]) * float(man_prices[i])
                         
@@ -336,9 +357,7 @@ def edit_proposal(prop_id):
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
                     (prop_id, b_type, order, title, text_content, qty, price, unit, i1, i2, i3, items_json, cost))
             
-            # ДОБАВЛЕНО: Сохраняем новую посчитанную сумму в базу
             c.execute("UPDATE proposals SET total=? WHERE id=?", (total, prop_id))
-            
             conn.commit()
             return redirect(url_for('proposals_list'))
 
@@ -397,7 +416,6 @@ def duplicate_proposal(prop_id):
         conn.commit()
     return redirect(url_for('edit_proposal', prop_id=new_id))
 
-
 @app.route('/view_proposal/<prop_id>')
 def view_proposal(prop_id):
     with sqlite3.connect(DB_NAME) as conn:
@@ -406,7 +424,6 @@ def view_proposal(prop_id):
         blocks = c.execute("SELECT block_type, title, text_content, qty, price, unit, img1, img2, img3, items_json, cost FROM proposal_blocks WHERE proposal_id=? ORDER BY sort_order", (prop_id,)).fetchall()
         s = {r[0]: r[1] for r in c.execute("SELECT * FROM settings").fetchall()}
     return render_template('view_proposal.html', prop=prop, blocks=blocks, s=s, json=json)
-
 
 @app.route('/invoices')
 def invoices_list():
@@ -538,15 +555,11 @@ def delete_knp(code):
     with sqlite3.connect(DB_NAME) as conn: conn.cursor().execute("DELETE FROM knp_directory WHERE code = ?", (code,)); conn.commit()
     return jsonify(success=True)
 
-
-
-
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
     with sqlite3.connect(DB_NAME) as conn:
         c = conn.cursor()
         if request.method == 'POST':
-            # 1. Сохраняем обычные настройки и промпт в БД
             keys = ['company_name', 'company_bin', 'company_bank', 'company_iban', 'company_address', 'company_bik', 'company_kbe', 'ai_model', 'ai_prompt']
             for k in keys:
                 val = request.form.get(k)
@@ -554,7 +567,6 @@ def settings():
                     c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (k, val))
             conn.commit()
             
-            # 2. Сохраняем API-ключ в файл api_key.txt и обновляем ИИ на лету
             new_key = request.form.get('api_key')
             if new_key is not None:
                 with open('api_key.txt', 'w', encoding='utf-8') as f:
@@ -565,7 +577,6 @@ def settings():
             
         sets = {r[0]: r[1] for r in c.execute("SELECT * FROM settings").fetchall()}
         
-    # Читаем текущий API-ключ из файла для отображения
     current_api_key = ""
     try:
         with open('api_key.txt', 'r', encoding='utf-8') as f:
@@ -573,7 +584,6 @@ def settings():
     except FileNotFoundError:
         pass
 
-    # Задаем базовый промпт, если он еще не сохранен в базе
     if 'ai_prompt' not in sets or not sets['ai_prompt']:
         sets['ai_prompt'] = (
             "Ты — концептуальный промышленный дизайнер и архитектурный критик. "
@@ -593,9 +603,6 @@ def settings():
         available_models = ['gemini-1.5-flash', 'gemini-1.5-pro']
         
     return render_template('settings.html', s=sets, available_models=available_models, current_api_key=current_api_key)
-
-
-
 
 @app.route('/print/<id>')
 def print_invoice(id):
@@ -634,19 +641,13 @@ def client_invoices(client_id):
         invs = c.execute("SELECT i.id, c.name, i.date, i.total, i.status FROM invoices i LEFT JOIN clients c ON i.client_id = c.id WHERE i.client_id = ? ORDER BY i.date DESC", (client_id,)).fetchall()
     return render_template('invoices.html', invoices=invs, title=f"Счета: {name}", current_client=client_id)
 
-
 @app.route('/api/get_local_icons')
 def get_local_icons():
-    # Используем абсолютный путь для надежности
     folder = os.path.join(app.static_folder, 'category_icons')
     if not os.path.exists(folder):
         os.makedirs(folder)
-    
-    # Получаем список файлов и фильтруем только картинки
     icons = [f for f in os.listdir(folder) if f.lower().endswith(('.png', '.svg', '.jpg', '.webp'))]
     return jsonify(icons)
-
-
 
 # --- AI ROUTE ---
 @app.route('/api/ai_describe', methods=['POST'])
@@ -658,13 +659,11 @@ def ai_describe():
         file = request.files['image']
         img = PIL.Image.open(io.BytesIO(file.read()))
         
-        # Достаем модель и промпт из базы данных
         with sqlite3.connect(DB_NAME) as conn:
             model_setting = conn.cursor().execute("SELECT value FROM settings WHERE key='ai_model'").fetchone()
             model_name = model_setting[0] if model_setting and model_setting[0] else 'gemini-1.5-flash'
             
             prompt_setting = conn.cursor().execute("SELECT value FROM settings WHERE key='ai_prompt'").fetchone()
-            # Если в базе пусто, используем резервный промпт
             prompt = prompt_setting[0] if prompt_setting and prompt_setting[0] else "Опиши этот МАФ как профессиональный дизайнер. 3-4 предложения."
         
         model = genai.GenerativeModel(model_name)
@@ -680,5 +679,197 @@ def ai_describe():
         return jsonify({'error': str(e)}), 500
 # ----------------
 
+# --- РОУТЫ ПОСТАВЩИКОВ ---
+@app.route('/suppliers')
+def suppliers_list():
+    with sqlite3.connect(DB_NAME) as conn:
+        suppliers = conn.cursor().execute("SELECT * FROM suppliers ORDER BY name").fetchall()
+    return render_template('suppliers.html', suppliers=suppliers)
+
+@app.route('/api/add_supplier', methods=['POST'])
+def add_supplier():
+    d = request.json
+    with sqlite3.connect(DB_NAME) as conn:
+        conn.cursor().execute("INSERT INTO suppliers (name, contact, price_url, last_updated) VALUES (?, ?, ?, ?)", 
+                              (d['name'], d['contact'], d['price_url'], 'Никогда'))
+        conn.commit()
+    return jsonify(success=True)
+
+@app.route('/api/edit_supplier', methods=['POST'])
+def edit_supplier():
+    d = request.json
+    with sqlite3.connect(DB_NAME) as conn:
+        conn.cursor().execute("UPDATE suppliers SET name=?, contact=?, price_url=? WHERE id=?", 
+                              (d['name'], d['contact'], d['price_url'], d['id']))
+        conn.commit()
+    return jsonify(success=True)
+
+@app.route('/api/delete_supplier/<id>', methods=['POST'])
+def delete_supplier(id):
+    with sqlite3.connect(DB_NAME) as conn:
+        conn.cursor().execute("DELETE FROM suppliers WHERE id=?", (id,))
+        conn.cursor().execute("DELETE FROM price_history WHERE supplier_id=?", (id,))
+        conn.commit()
+    return jsonify(success=True)
+
+# --- ИИ ПАРСЕР ПРАЙСОВ (АВТОМАТИКА ПО ССЫЛКЕ) ---
+@app.route('/api/parse_supplier/<int:supplier_id>', methods=['POST'])
+def parse_supplier(supplier_id):
+    try:
+        with sqlite3.connect(DB_NAME) as conn:
+            c = conn.cursor()
+            supplier = c.execute("SELECT name, price_url FROM suppliers WHERE id=?", (supplier_id,)).fetchone()
+            
+        if not supplier or not supplier[1]:
+            return jsonify({'error': 'У поставщика не указана ссылка на прайс в настройках!'}), 400
+            
+        sup_name, url = supplier[0], supplier[1]
+        print(f"Скачиваем прайс по ссылке: {url}")
+        
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'} 
+        pdf_response = requests.get(url, headers=headers, timeout=20)
+        pdf_response.raise_for_status() 
+        
+        pdf_document = fitz.open(stream=pdf_response.content, filetype="pdf")
+        images_for_ai = []
+        
+        pages_to_process = min(15, len(pdf_document))
+        for page_num in range(pages_to_process):
+            page = pdf_document.load_page(page_num)
+            pix = page.get_pixmap(dpi=150) 
+            img_data = pix.tobytes("png")
+            img = PIL.Image.open(io.BytesIO(img_data))
+            images_for_ai.append(img)
+            
+        prompt = """
+        Ты — опытный сметчик и аналитик закупок. Я передаю тебе страницы актуального прайс-листа. 
+        Переведи их в строгий формат JSON.
+        
+        ПРАВИЛА ИЗВЛЕЧЕНИЯ:
+        1. Если это пиломатериалы (дерево): Собери полное название в формате "Наименование + Материал + Толщина х Ширина + Сорт". (Например: "Вагонка евро лиственница 12х80 ЭКСТРА"). Строки, где указано "Наличие: нет" — строго ИГНОРИРОВАТЬ.
+        2. Если это металлопрокат: Собери название из главного заголовка группы и размера. (Например: "Труба стальная электросварная 21,3x2"). 
+        3. Цена: Если есть цена и за метр, и за тонну — отдай приоритет цене за метр. Если только за тонну — бери её. Очищай от пробелов.
+        4. Единица измерения (unit): Укажи "пог.м", "кв.м", "т" или "шт" в зависимости от выбранной цены.
+        
+        ФОРМАТ ОТВЕТА (ВЕРНИ ТОЛЬКО JSON, БЕЗ МАРКДАУНА И ПОЯСНЕНИЙ):
+        [
+            {"item_name": "Название товара", "unit": "пог.м", "price": 1500},
+            {"item_name": "Название 2", "unit": "т", "price": 450000}
+        ]
+        """
+        
+        with sqlite3.connect(DB_NAME) as conn:
+            model_setting = conn.cursor().execute("SELECT value FROM settings WHERE key='ai_model'").fetchone()
+            model_name = model_setting[0] if model_setting and model_setting[0] else 'gemini-1.5-flash'
+            
+        model = genai.GenerativeModel(model_name)
+        contents = [prompt] + images_for_ai
+        
+        ai_response = model.generate_content(contents)
+        
+        raw_text = ai_response.text.replace('```json', '').replace('```', '').strip()
+        parsed_data = json.loads(raw_text)
+        
+        with sqlite3.connect(DB_NAME) as conn:
+            c = conn.cursor()
+            date_str = datetime.now().strftime("%d.%m.%Y")
+            added_count = 0
+            
+            for item in parsed_data:
+                name = item.get('item_name', 'Неизвестно').strip()
+                unit = item.get('unit', 'шт.').strip()
+                new_price = float(item.get('price', 0))
+                
+                latest_record = c.execute("SELECT price FROM price_history WHERE supplier_id=? AND item_name=? ORDER BY id DESC LIMIT 1", (supplier_id, name)).fetchone()
+                
+                if not latest_record or latest_record[0] != new_price:
+                    c.execute("INSERT INTO price_history (supplier_id, item_name, unit, price, date) VALUES (?, ?, ?, ?, ?)",
+                              (supplier_id, name, unit, new_price, date_str))
+                    added_count += 1
+            
+            c.execute("UPDATE suppliers SET last_updated=? WHERE id=?", (date_str, supplier_id))
+            conn.commit()
+            
+        return jsonify({'success': True, 'found': len(parsed_data), 'added_new': added_count})
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': f'Не удалось скачать прайс по ссылке. Сервер ответил: {str(e)}'}), 400
+    except json.JSONDecodeError:
+        return jsonify({'error': 'ИИ не смог распознать структуру PDF. Убедитесь, что ссылка ведет именно на прайс-лист.'}), 500
+    except Exception as e:
+        print(f"Ошибка ИИ парсера: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/materials')
+def materials_list():
+    with sqlite3.connect(DB_NAME) as conn:
+        history = conn.cursor().execute('''
+            SELECT p.id, p.item_name, p.unit, p.price, p.date, s.name 
+            FROM price_history p 
+            JOIN suppliers s ON p.supplier_id = s.id 
+            ORDER BY p.date DESC, s.name, p.id ASC
+        ''').fetchall()
+    return render_template('materials.html', history=history)
+
+@app.route('/api/clear_materials', methods=['POST'])
+def clear_materials():
+    with sqlite3.connect(DB_NAME) as conn:
+        conn.cursor().execute("DELETE FROM price_history")
+        conn.cursor().execute("UPDATE suppliers SET last_updated='Никогда'")
+        conn.commit()
+    return jsonify(success=True)
+
+# --- API ДЛЯ СВЯЗКИ СКЛАДА И КАТАЛОГА ---
+@app.route('/api/get_latest_materials')
+def get_latest_materials():
+    with sqlite3.connect(DB_NAME) as conn:
+        items = conn.cursor().execute('''
+            SELECT item_name, unit, price 
+            FROM price_history 
+            WHERE id IN (SELECT MAX(id) FROM price_history GROUP BY item_name)
+            ORDER BY item_name
+        ''').fetchall()
+        result = [{'name': i[0], 'unit': i[1], 'price': float(i[2])} for i in items]
+    return jsonify(result)
+
+# --- РУЧНОЕ УПРАВЛЕНИЕ СКЛАДОМ ---
+@app.route('/api/add_material_manual', methods=['POST'])
+def add_material_manual():
+    d = request.json
+    date_str = datetime.now().strftime("%d.%m.%Y")
+    with sqlite3.connect(DB_NAME) as conn:
+        c = conn.cursor()
+        sup = c.execute("SELECT id FROM suppliers WHERE name=?", (d['supplier'],)).fetchone()
+        if sup:
+            sup_id = sup[0]
+        else:
+            c.execute("INSERT INTO suppliers (name, contact, price_url, last_updated) VALUES (?, '', '', ?)", (d['supplier'], date_str))
+            sup_id = c.lastrowid
+            
+        c.execute("INSERT INTO price_history (supplier_id, item_name, unit, price, date) VALUES (?, ?, ?, ?, ?)", 
+                  (sup_id, d['name'], d['unit'], float(d['price']), date_str))
+        conn.commit()
+    return jsonify(success=True)
+
+@app.route('/api/edit_material', methods=['POST'])
+def edit_material():
+    d = request.json
+    with sqlite3.connect(DB_NAME) as conn:
+        conn.cursor().execute("UPDATE price_history SET item_name=?, unit=?, price=? WHERE id=?", 
+                              (d['name'], d['unit'], float(d['price']), d['id']))
+        conn.commit()
+    return jsonify(success=True)
+
+@app.route('/api/delete_materials_bulk', methods=['POST'])
+def delete_materials_bulk():
+    ids = request.json.get('ids', [])
+    with sqlite3.connect(DB_NAME) as conn:
+        c = conn.cursor()
+        for item_id in ids:
+            c.execute("DELETE FROM price_history WHERE id=?", (item_id,))
+        conn.commit()
+    return jsonify(success=True)
+
+    
 if __name__ == '__main__': 
     app.run(debug=True)
