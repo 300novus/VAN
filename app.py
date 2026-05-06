@@ -264,12 +264,44 @@ def create_proposal():
                 if b_type == 'cover':
                     title, subtitle = request.form.get(f'title_{bid}'), request.form.get(f'subtitle_{bid}')
                     i1, i2, i3 = save_file(request.files.get(f'img1_{bid}'), f"{prop_id}_c1_{bid}"), save_file(request.files.get(f'img2_{bid}'), f"{prop_id}_c2_{bid}"), save_file(request.files.get(f'img3_{bid}'), f"{prop_id}_c3_{bid}")
-                    s_json = json.dumps({'angle': request.form.get(f'cov_angle_{bid}'), 'gap': request.form.get(f'cov_gap_{bid}'), 'grad': request.form.get(f'cov_grad_{bid}'), 'color': request.form.get(f'cov_color_{bid}'), 'shadow': request.form.get(f'cov_shadow_{bid}'), 'top_text': request.form.get(f'cov_top_{bid}')}, ensure_ascii=False)
+                    
+                    s_json = json.dumps({
+                        'angle': request.form.get(f'cov_angle_{bid}', 10),
+                        'gap': request.form.get(f'cov_gap_{bid}', 5),
+                        'grad': request.form.get(f'cov_grad_{bid}', 70),
+                        'color': request.form.get(f'cov_color_{bid}', '#ffffff'),
+                        'shadow': request.form.get(f'cov_shadow_{bid}', 80),
+                        'shadow_style': request.form.get(f'cov_shstyle_{bid}', 'soft'),
+                        'shadow_style': request.form.get(f'cov_shstyle_{bid}', 'soft'),
+                        'top_text': request.form.get(f'cov_top_{bid}', ''),
+                        'text_pos': request.form.get(f'cov_textpos_{bid}', 'bottom-left'),
+                        'grad_dir': request.form.get(f'cov_graddir_{bid}', 'top'),
+                        'bw1': request.form.get(f'cov_bw1_{bid}', 'off'),
+                        'bw2': request.form.get(f'cov_bw2_{bid}', 'off'),
+                        'bw3': request.form.get(f'cov_bw3_{bid}', 'off'), 'title_size': request.form.get(f'cov_tsize_{bid}', 40), 'sub_size': request.form.get(f'cov_ssize_{bid}', 16), 'height': request.form.get(f'cov_height_{bid}', 100)
+                    }, ensure_ascii=False)
+                    
                     c.execute("INSERT INTO proposal_blocks (proposal_id, block_type, sort_order, title, text_content, img1, img2, img3, items_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (prop_id, b_type, order, title, subtitle, i1, i2, i3, s_json))
+                elif b_type == 'before_after':
+                    i1 = save_file(request.files.get(f'img1_{bid}'), f"{prop_id}_ba1_{bid}")
+                    i2 = save_file(request.files.get(f'img2_{bid}'), f"{prop_id}_ba2_{bid}")
+                    s_json = json.dumps({'cap1': request.form.get(f'ba_cap1_{bid}', ''), 'cap2': request.form.get(f'ba_cap2_{bid}', '')}, ensure_ascii=False)
+                    c.execute("INSERT INTO proposal_blocks (proposal_id, block_type, sort_order, img1, img2, items_json) VALUES (?, ?, ?, ?, ?, ?)", (prop_id, b_type, order, i1, i2, s_json))
                 elif b_type == 'text':
                     text = request.form.get(f'text_{bid}')
                     i1, i2, i3 = save_file(request.files.get(f'img1_{bid}'), f"{prop_id}_t1_{bid}"), save_file(request.files.get(f'img2_{bid}'), f"{prop_id}_t2_{bid}"), save_file(request.files.get(f'img3_{bid}'), f"{prop_id}_t3_{bid}")
-                    s_json = json.dumps({'bg': request.form.get(f'txt_bg_{bid}'), 'color': request.form.get(f'txt_color_{bid}'), 'bc': request.form.get(f'txt_bc_{bid}'), 'bw': request.form.get(f'txt_bw_{bid}'), 'b_style': request.form.get(f'txt_bstyle_{bid}', 'left'), 'b_rad': request.form.get(f'txt_brad_{bid}', 0)}, ensure_ascii=False)
+                    
+                    s_json = json.dumps({
+                        'bg': request.form.get(f'txt_bg_{bid}', '#f9fafb'),
+                        'color': request.form.get(f'txt_color_{bid}', '#333333'),
+                        'bc': request.form.get(f'txt_bc_{bid}', '#2563eb'),
+                        'bw': request.form.get(f'txt_bw_{bid}', 4),
+                        'b_style': request.form.get(f'txt_bstyle_{bid}', 'left'),
+                        'b_line': request.form.get(f'txt_bline_{bid}', 'solid'),
+                        'b_rad': request.form.get(f'txt_brad_{bid}', 0),
+                        'img_pos': request.form.get(f'txt_imgpos_{bid}', 'right')
+                    }, ensure_ascii=False)
+                    
                     c.execute("INSERT INTO proposal_blocks (proposal_id, block_type, sort_order, text_content, img1, img2, img3, items_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (prop_id, b_type, order, text, i1, i2, i3, s_json))
                 elif b_type == 'product':
                     title, unit = request.form.get(f'title_{bid}'), request.form.get(f'unit_{bid}')
@@ -337,9 +369,34 @@ def edit_proposal(prop_id):
                 
                 items_json = "{}"
                 if b_type == 'cover':
-                    items_json = json.dumps({'angle': request.form.get(f'cov_angle_{bid}', 10), 'gap': request.form.get(f'cov_gap_{bid}', 5), 'grad': request.form.get(f'cov_grad_{bid}', 70), 'color': request.form.get(f'cov_color_{bid}', '#ffffff'), 'shadow': request.form.get(f'cov_shadow_{bid}', 'on'), 'top_text': request.form.get(f'cov_top_{bid}', '')})
+                    items_json = json.dumps({
+                        'angle': request.form.get(f'cov_angle_{bid}', 10), 
+                        'gap': request.form.get(f'cov_gap_{bid}', 5), 
+                        'grad': request.form.get(f'cov_grad_{bid}', 70), 
+                        'color': request.form.get(f'cov_color_{bid}', '#ffffff'), 
+                        'shadow': request.form.get(f'cov_shadow_{bid}', 80),
+                        'shadow_style': request.form.get(f'cov_shstyle_{bid}', 'soft'),
+                        'shadow_style': request.form.get(f'cov_shstyle_{bid}', 'soft'), 
+                        'top_text': request.form.get(f'cov_top_{bid}', ''), 
+                        'text_pos': request.form.get(f'cov_textpos_{bid}', 'bottom-left'), 
+                        'grad_dir': request.form.get(f'cov_graddir_{bid}', 'top'), 
+                        'bw1': request.form.get(f'cov_bw1_{bid}', 'off'), 
+                        'bw2': request.form.get(f'cov_bw2_{bid}', 'off'), 
+                        'bw3': request.form.get(f'cov_bw3_{bid}', 'off'), 'title_size': request.form.get(f'cov_tsize_{bid}', 40), 'sub_size': request.form.get(f'cov_ssize_{bid}', 16), 'height': request.form.get(f'cov_height_{bid}', 100)
+                    }, ensure_ascii=False)
+                elif b_type == 'before_after':
+                    items_json = json.dumps({'cap1': request.form.get(f'ba_cap1_{bid}', ''), 'cap2': request.form.get(f'ba_cap2_{bid}', '')}, ensure_ascii=False)
                 elif b_type == 'text':
-                    items_json = json.dumps({'bg': request.form.get(f'txt_bg_{bid}', '#f9fafb'), 'color': request.form.get(f'txt_color_{bid}', '#333333'), 'bc': request.form.get(f'txt_bc_{bid}', '#2563eb'), 'bw': request.form.get(f'txt_bw_{bid}', 4), 'b_style': request.form.get(f'txt_bstyle_{bid}', 'left'), 'b_rad': request.form.get(f'txt_brad_{bid}', 0)})
+                    items_json = json.dumps({
+                        'bg': request.form.get(f'txt_bg_{bid}', '#f9fafb'),
+                        'color': request.form.get(f'txt_color_{bid}', '#333333'),
+                        'bc': request.form.get(f'txt_bc_{bid}', '#2563eb'),
+                        'bw': request.form.get(f'txt_bw_{bid}', 4),
+                        'b_style': request.form.get(f'txt_bstyle_{bid}', 'left'),
+                        'b_line': request.form.get(f'txt_bline_{bid}', 'solid'),
+                        'b_rad': request.form.get(f'txt_brad_{bid}', 0),
+                        'img_pos': request.form.get(f'txt_imgpos_{bid}', 'right')
+                    }, ensure_ascii=False)
                 elif b_type == 'manual_product':
                     man_titles = request.form.getlist(f'man_title_{bid}[]')
                     man_units = request.form.getlist(f'man_unit_{bid}[]')
@@ -365,7 +422,6 @@ def edit_proposal(prop_id):
         blocks = c.execute("SELECT id, block_type, title, text_content, qty, price, unit, img1, img2, img3, items_json, cost FROM proposal_blocks WHERE proposal_id=? ORDER BY sort_order", (prop_id,)).fetchall()
         clients = c.execute("SELECT id, name FROM clients ORDER BY name").fetchall()
     return render_template('edit_proposal.html', prop=prop, blocks=blocks, clients=clients, json=json)
-
 @app.route('/proposal_to_invoice/<prop_id>')
 def proposal_to_invoice(prop_id):
     with sqlite3.connect(DB_NAME) as conn:
@@ -733,6 +789,7 @@ def parse_supplier(supplier_id):
         pdf_document = fitz.open(stream=pdf_response.content, filetype="pdf")
         images_for_ai = []
         
+        # Берем до 15 страниц
         pages_to_process = min(15, len(pdf_document))
         for page_num in range(pages_to_process):
             page = pdf_document.load_page(page_num)
@@ -742,43 +799,70 @@ def parse_supplier(supplier_id):
             images_for_ai.append(img)
             
         prompt = """
-        Ты — опытный сметчик и аналитик закупок. Я передаю тебе страницы актуального прайс-листа. 
-        Переведи их в строгий формат JSON.
+       Ты — ИИ-аналитик. Я даю тебе ОДНУ страницу прайс-листа. Переведи таблицу с ценами в JSON.
         
-        ПРАВИЛА ИЗВЛЕЧЕНИЯ:
-        1. Если это пиломатериалы (дерево): Собери полное название в формате "Наименование + Материал + Толщина х Ширина + Сорт". (Например: "Вагонка евро лиственница 12х80 ЭКСТРА"). Строки, где указано "Наличие: нет" — строго ИГНОРИРОВАТЬ.
-        2. Если это металлопрокат: Собери название из главного заголовка группы и размера. (Например: "Труба стальная электросварная 21,3x2"). 
-        3. Цена: Если есть цена и за метр, и за тонну — отдай приоритет цене за метр. Если только за тонну — бери её. Очищай от пробелов.
-        4. Единица измерения (unit): Укажи "пог.м", "кв.м", "т" или "шт" в зависимости от выбранной цены.
+        САМОЕ ГЛАВНОЕ ПРАВИЛО УНИКАЛЬНОСТИ:
+        Если в таблице есть несколько строк с похожим товаром (например, "Блок хаус" или "Шпунт"), но у них РАЗНЫЕ ЦЕНЫ — значит они чем-то отличаются! 
+        Ты ОБЯЗАН найти это отличие (сорт, класс, размер, порода дерева) в соседних колонках и добавить его в название! КАТЕГОРИЧЕСКИ ЗАПРЕЩАЕТСЯ выдавать одинаковые названия (item_name) для разных строк.
         
-        ФОРМАТ ОТВЕТА (ВЕРНИ ТОЛЬКО JSON, БЕЗ МАРКДАУНА И ПОЯСНЕНИЙ):
-        [
-            {"item_name": "Название товара", "unit": "пог.м", "price": 1500},
-            {"item_name": "Название 2", "unit": "т", "price": 450000}
-        ]
+        ПРАВИЛА ИМЕНОВАНИЯ:
+        1. ДЛЯ ДЕРЕВА: Внимательно смотри в правую часть таблицы. Там всегда есть Сорт (А, В, С, АВ, ВС, 1, 2, 3, Экстра, Прима, Высший). Обязательно приклей слово "Сорт" и его значение в конец названия. Пример: "Блок хаус сосна 28х135 Сорт АВ".
+        2. ДЛЯ МЕТАЛЛА (арматура, труба, лист, швеллер и т.д.): КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО писать слово "Сорт". Название должно быть АБСОЛЮТНО УНИКАЛЬНЫМ. Обязательно собирай в название: тип, размер, толщину стенки, марку стали и длину. 
+        ГЛАВНОЕ ПРАВИЛО: Если в таблице есть цена и за тонну, и за метр — вытаскивай ТОЛЬКО ОДНУ цену (приоритет отдавай пог.м, кв.м или шт.). Не создавай две записи из одной строки!
+        Пример идеального названия: "Арматура А3 рифленая 12мм А500С L=11.7м"
+        ФОРМАТ ОТВЕТА:
+        Каждая строка с ценой — отдельный объект. 
+        Верни ТОЛЬКО валидный JSON-массив. Если на картинке нет цен или таблиц, верни пустой массив: []
         """
         
         with sqlite3.connect(DB_NAME) as conn:
             model_setting = conn.cursor().execute("SELECT value FROM settings WHERE key='ai_model'").fetchone()
-            model_name = model_setting[0] if model_setting and model_setting[0] else 'gemini-1.5-flash'
+            model_name = model_setting[0] if model_setting and model_setting[0] else 'gemini-3-flash-preview'
             
         model = genai.GenerativeModel(model_name)
-        contents = [prompt] + images_for_ai
         
-        ai_response = model.generate_content(contents)
+  # НОВАЯ ЛОГИКА: Читаем постранично с жестким фильтром!
+        all_parsed_data = []
         
-        raw_text = ai_response.text.replace('```json', '').replace('```', '').strip()
-        parsed_data = json.loads(raw_text)
+        for img in images_for_ai:
+            try:
+                # Отправляем ИИ по одной картинке за раз
+                ai_response = model.generate_content([prompt, img])
+                raw_text = ai_response.text.strip()
+                
+                # ЖЕСТКАЯ ОБРЕЗКА: Ищем только то, что внутри квадратных скобок [...]
+                # Это спасет, если ИИ решит написать "Вот ваш ответ: [ ... ]"
+                start_idx = raw_text.find('[')
+                end_idx = raw_text.rfind(']') + 1
+                
+                if start_idx != -1 and end_idx != -1:
+                    clean_json = raw_text[start_idx:end_idx]
+                    page_data = json.loads(clean_json)
+                    if isinstance(page_data, list):
+                        all_parsed_data.extend(page_data)
+            except Exception as e:
+                print(f"Пропущена страница из-за ошибки ИИ: {e}")
+                continue # Идем к следующей странице
         
         with sqlite3.connect(DB_NAME) as conn:
             c = conn.cursor()
             date_str = datetime.now().strftime("%d.%m.%Y")
             added_count = 0
             
-            for item in parsed_data:
-                name = item.get('item_name', 'Неизвестно').strip()
-                unit = item.get('unit', 'шт.').strip()
-                new_price = float(item.get('price', 0))
+            for item in all_parsed_data:
+                name = str(item.get('item_name', 'Неизвестно')).strip()
+                unit = str(item.get('unit', 'шт.')).strip()
+                
+                # БРОНЕБОЙНАЯ ОЧИСТКА ЦЕНЫ (убиваем пробелы и запятые)
+                raw_price = str(item.get('price', '0')).replace(' ', '').replace(',', '.')
+                try:
+                    new_price = float(raw_price)
+                except ValueError:
+                    new_price = 0.0
+                
+                # Игнорируем пустые или сломанные строки
+                if new_price <= 0 or name == 'Неизвестно': 
+                    continue 
                 
                 latest_record = c.execute("SELECT price FROM price_history WHERE supplier_id=? AND item_name=? ORDER BY id DESC LIMIT 1", (supplier_id, name)).fetchone()
                 
@@ -790,26 +874,45 @@ def parse_supplier(supplier_id):
             c.execute("UPDATE suppliers SET last_updated=? WHERE id=?", (date_str, supplier_id))
             conn.commit()
             
-        return jsonify({'success': True, 'found': len(parsed_data), 'added_new': added_count})
+        return jsonify({'success': True, 'found': len(all_parsed_data), 'added_new': added_count})
 
     except requests.exceptions.RequestException as e:
-        return jsonify({'error': f'Не удалось скачать прайс по ссылке. Сервер ответил: {str(e)}'}), 400
-    except json.JSONDecodeError:
-        return jsonify({'error': 'ИИ не смог распознать структуру PDF. Убедитесь, что ссылка ведет именно на прайс-лист.'}), 500
+        return jsonify({'error': f'Не удалось скачать прайс. Ошибка: {str(e)}'}), 400
     except Exception as e:
-        print(f"Ошибка ИИ парсера: {e}")
+        print(f"Ошибка парсера: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/materials')
 def materials_list():
     with sqlite3.connect(DB_NAME) as conn:
+        # Умный SQL-запрос: выбираем только САМУЮ ПОСЛЕДНЮЮ запись для каждой связки "Товар + Поставщик"
         history = conn.cursor().execute('''
-            SELECT p.id, p.item_name, p.unit, p.price, p.date, s.name 
+            SELECT p.id, p.item_name, p.unit, p.price, p.date, s.name, s.id 
             FROM price_history p 
             JOIN suppliers s ON p.supplier_id = s.id 
-            ORDER BY p.date DESC, s.name, p.id ASC
+            WHERE p.id IN (
+                SELECT MAX(id) 
+                FROM price_history 
+                GROUP BY supplier_id, item_name
+            )
+            ORDER BY s.name, p.item_name
         ''').fetchall()
     return render_template('materials.html', history=history)
+
+# --- НОВЫЙ API: ВЫГРУЗКА ИСТОРИИ ЦЕН ДЛЯ ГРАФИКА ---
+@app.route('/api/material_history')
+def material_history():
+    item_name = request.args.get('name')
+    sup_id = request.args.get('sup_id')
+    with sqlite3.connect(DB_NAME) as conn:
+        # Достаем все цены на конкретный товар от конкретного поставщика
+        history = conn.cursor().execute('''
+            SELECT price, date 
+            FROM price_history 
+            WHERE item_name=? AND supplier_id=? 
+            ORDER BY id DESC
+        ''', (item_name, sup_id)).fetchall()
+    return jsonify([{'price': float(r[0]), 'date': str(r[1])} for r in history])
 
 @app.route('/api/clear_materials', methods=['POST'])
 def clear_materials():

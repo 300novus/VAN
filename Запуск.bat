@@ -1,7 +1,32 @@
 @echo off
-echo Устанавливаем нейросеть (если еще не установлена)...
-py -m pip install --upgrade google-generativeai pillow
-echo Запускаем Chingiskhan Pro V11...
+:: Переключаем кодировку консоли на UTF-8
+chcp 65001 >nul
+
+title Chingiskhan Pro V11 - Setup & Launch
+
+echo ======================================================
+echo           ЗАПУСК CHINGISKHAN PRO V3.1
+echo ======================================================
+
+:: Проверка библиотек (можно закомментировать после первого успешного запуска)
+echo [1/3] Проверка необходимых библиотек...
+py -m pip install --quiet --upgrade google-generativeai pillow flask
+
+:: Запуск сервера в фоновом режиме или параллельно
+echo [2/3] Запуск локального сервера...
+
+:: Небольшая пауза перед открытием браузера (3 секунды)
+:: Чтобы сервер успел "подняться"
+timeout /t 3 /nobreak >nul
 start http://127.0.0.1:5000
+
+echo [3/3] Инициализация приложения app.py...
+echo.
 py app.py
+
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo [!] Произошла ошибка при выполнении скрипта.
+)
+
 pause

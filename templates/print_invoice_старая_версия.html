@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8"><title>Счет №{{ inv[0] }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 13px; color: #000; padding: 20px; background: #fff; max-width: 900px; margin: 0 auto;}
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .b-table td, .b-table th { border: 1px solid #000; padding: 4px 6px; vertical-align: top; }
+        .text-center { text-align: center; } .text-right { text-align: right; } .bold { font-weight: bold; }
+        .header-title { font-size: 18px; font-weight: bold; margin: 25px 0 15px 0; border-bottom: 2px solid #000; padding-bottom: 5px; }
+        .info-row { display: flex; margin-bottom: 10px; } .info-label { width: 120px; } .info-value { flex: 1; font-weight: bold; }
+        .totals { width: 400px; float: right; } .totals td { padding: 3px 6px; } .clear { clear: both; }
+        @media print { .no-print { display: none; } body { padding: 0; } }
+        .btn { background: #1a1a1a; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin-bottom: 20px; font-weight: bold;}
+    </style>
+</head>
+<body>
+    <div class="no-print"><a href="/invoices" class="btn">← Назад</a><button onclick="window.print()" class="btn" style="background:#0056b3; margin-left: 10px;">🖨️ Печать PDF</button></div>
+    <table class="b-table">
+        <tr><td rowspan="2" style="width: 45%;">Бенефициар:<br><span class="bold">{{ s.company_name }}</span><br>БИН: {{ s.company_bin }}</td><td class="text-center" style="width: 35%;">ИИК</td><td class="text-center" style="width: 20%;">Кбе</td></tr>
+        <tr><td class="text-center bold">{{ s.company_iban }}</td><td class="text-center bold">{{ s.company_kbe }}</td></tr>
+        <tr><td>Банк бенефициара:<br>{{ s.company_bank }}</td><td class="text-center">БИК<br><span class="bold">{{ s.company_bik }}</span></td><td class="text-center">Код назначения платежа<br><span class="bold">{{ inv[8] }}</span></td></tr>
+    </table>
+    <div class="header-title">Счет на оплату №{{ inv[0] }} от {{ inv[2] }} г.</div>
+    <div class="info-row"><div class="info-label">Поставщик:</div><div class="info-value">БИН/ИИН {{ s.company_bin }}, {{ s.company_name }}, {{ s.company_address }}</div></div>
+    <div class="info-row"><div class="info-label">Покупатель:</div><div class="info-value">БИН/ИИН {{ client[2] }}, {{ client[1] }}, {{ client[4] }}</div></div>
+    <div class="info-row" style="margin-bottom: 20px;"><div class="info-label bold">Договор:</div><div class="info-value bold">Без договора</div></div>
+    
+    <table class="b-table">
+        <tr><th class="text-center" style="width: 5%;">№</th><th class="text-center">Наименование</th><th class="text-center" style="width: 10%;">Ед. изм.</th><th class="text-center" style="width: 10%;">Кол-во</th><th class="text-center" style="width: 15%;">Цена</th><th class="text-center" style="width: 15%;">Сумма</th></tr>
+        {% for item in items %}
+        <tr>
+            <td class="text-center">{{ loop.index }}</td>
+            <td>{{ item[2] }}</td>
+            <td class="text-center">{{ item[3] }}</td>
+            <td class="text-center">{{ '{:g}'.format(item[4]) }}</td>
+            <td class="text-right">{{ '{:,.2f}'.format(item[5]).replace(',', ' ') }}</td>
+            <td class="text-right">{{ '{:,.2f}'.format(item[6]).replace(',', ' ') }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    
+    <table class="totals">
+        <tr><td class="text-right bold">Итого:</td><td class="text-right bold" style="width: 120px;">{{ '{:,.2f}'.format(inv[3]).replace(',', ' ') }}</td></tr>
+        <tr><td class="text-right bold">В том числе НДС: {{ '{:g}'.format(inv[4]) }} %</td><td class="text-right bold">{{ '{:,.2f}'.format(inv[5]).replace(',', ' ') }}</td></tr>
+        <tr><td class="text-right bold">Всего к оплате:</td><td class="text-right bold">{{ '{:,.2f}'.format(inv[6]).replace(',', ' ') }}</td></tr>
+    </table>
+    <div class="clear"></div>
+    <div style="margin-top: 15px; border-bottom: 2px solid #000; padding-bottom: 5px;">
+        <div>Всего наименований {{ items|length }}, на сумму {{ '{:,.2f}'.format(inv[6]).replace(',', ' ') }} KZT</div>
+        <div class="bold">Всего к оплате: {{ sum_words }}</div>
+    </div>
+    <div style="margin-top: 40px; display: flex;">
+        <div class="bold" style="width: 120px;">Исполнитель</div><div style="flex: 1; border-bottom: 1px solid #000; margin-right: 10px; max-width: 200px;"></div><div style="flex: 1; border-bottom: 1px solid #000; max-width: 200px; text-align: center;">/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/</div>
+    </div>
+</body>
+</html>

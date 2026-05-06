@@ -16,6 +16,7 @@
             <button type="button" onclick="addCoverBlock()" class="bg-purple-50 text-purple-600 hover:bg-purple-100 px-4 py-2 rounded-xl font-bold text-sm transition"><i class="fas fa-image mr-1"></i> Обложка</button>
             <button type="button" onclick="addTextBlock()" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-xl font-bold text-sm transition"><i class="fas fa-align-left mr-1"></i> Текст / Стиль</button>
             <button type="button" onclick="openCatalogModal()" class="bg-green-500 text-white hover:bg-green-600 px-4 py-2 rounded-xl font-bold text-sm shadow-md transition"><i class="fas fa-cubes mr-1"></i> Из Каталога</button>
+            <button type="button" onclick="addBeforeAfterBlock()" class="bg-white border border-gray-200 text-gray-700 hover:text-blue-600 hover:border-blue-200 px-4 py-2.5 rounded-xl font-bold transition shadow-sm flex items-center"><i class="fas fa-columns mr-2"></i>До / После</button>
             <button type="button" onclick="addManualProductBlock()" class="bg-gray-100 text-gray-600 hover:bg-gray-200 px-4 py-2 rounded-xl font-bold text-sm transition"><i class="fas fa-list mr-1"></i> Спецификация (Вручную)</button>
         </div>
     </form>
@@ -31,6 +32,17 @@
         <div id="catalogItemsList" class="flex-1 overflow-y-auto space-y-2 pr-2"></div>
     </div>
 </div>
+
+
+<style>
+    /* Возвращаем нормальный вид тексту внутри редактора КП */
+    .text-live-preview ul { list-style-type: disc !important; padding-left: 1.5rem !important; margin-top: 0.5rem; margin-bottom: 0.5rem; }
+    .text-live-preview ol { list-style-type: decimal !important; padding-left: 1.5rem !important; margin-top: 0.5rem; margin-bottom: 0.5rem; }
+    .text-live-preview h2 { font-size: 1.5rem !important; font-weight: 900 !important; margin-top: 1rem; margin-bottom: 0.5rem; line-height: 1.2; }
+    .text-live-preview h3 { font-size: 1.2rem !important; font-weight: 700 !important; margin-top: 1rem; margin-bottom: 0.5rem; }
+    .text-live-preview a { color: #2563eb !important; text-decoration: underline !important; font-weight: bold; cursor: pointer; }
+</style>
+
 
 <script>
 let catalogData = [];
@@ -118,7 +130,33 @@ function clearImage(inputId, previewId, hiddenId) {
     }
 } 
 
-function execCmd(command) { document.execCommand(command, false, null); }
+// --- НАЧАЛО НОВОГО БЛОКА ---
+function syncAllRichText() {
+    document.querySelectorAll('.text-live-preview').forEach(div => {
+        const hiddenInput = document.getElementById('text_' + div.dataset.id);
+        if(hiddenInput) hiddenInput.value = div.innerHTML;
+    });
+}
+
+function execCmd(command, value = null) { 
+    document.execCommand(command, false, value); 
+    syncAllRichText(); 
+}
+
+function addLink() { 
+    const url = prompt('Введите URL ссылки (начиная с https://):', 'https://'); 
+    if(url) { execCmd('createLink', url); } 
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            syncAllRichText();
+        });
+    }
+});
+// --- КОНЕЦ НОВОГО БЛОКА ---
 function updateRichText(div) { document.getElementById('text_' + div.dataset.id).value = div.innerHTML; }
 function moveUp(btn) { const row = btn.closest('.block-row'); if(row.previousElementSibling) row.parentNode.insertBefore(row, row.previousElementSibling); }
 function moveDown(btn) { const row = btn.closest('.block-row'); if(row.nextElementSibling) row.parentNode.insertBefore(row.nextElementSibling, row); }
@@ -126,19 +164,35 @@ function moveDown(btn) { const row = btn.closest('.block-row'); if(row.nextEleme
 function updateLiveCover(row) {
     if(!row || !row.querySelector('input[value="cover"]')) return;
     const id = row.querySelector('input[name="block_ids[]"]').value;
-    const angle = row.querySelector(`[name="cov_angle_${id}"]`).value;
-    const gap = row.querySelector(`[name="cov_gap_${id}"]`).value;
-    const grad = row.querySelector(`[name="cov_grad_${id}"]`).value;
-    const color = row.querySelector(`[name="cov_color_${id}"]`).value;
-    const shadow = row.querySelector(`[name="cov_shadow_${id}"]`).checked;
-    const topText = row.querySelector(`[name="cov_top_${id}"]`).value;
-    const title = row.querySelector(`[name="title_${id}"]`).value;
+    const angle = row.querySelector(`[name="cov_angle_${id}"]`).value || 10;
+    const gap = row.querySelector(`[name="cov_gap_${id}"]`).value || 5;
+    const grad = row.querySelector(`[name="cov_grad_${id}"]`).value || 70;
+    const gradDir = row.querySelector(`[name="cov_graddir_${id}"]`) ? row.querySelector(`[name="cov_graddir_${id}"]`).value : 'top';
+    const color = row.querySelector(`[name="cov_color_${id}"]`).value || '#ffffff';
+    const shadowInt = row.querySelector(`[name="cov_shadow_${id}"]`) ? row.querySelector(`[name="cov_shadow_${id}"]`).value : 80;
+    const textPos = row.querySelector(`[name="cov_textpos_${id}"]`) ? row.querySelector(`[name="cov_textpos_${id}"]`).value : 'bottom-left';
+
+    const bw1 = row.querySelector(`[name="cov_bw1_${id}"]`) ? row.querySelector(`[name="cov_bw1_${id}"]`).checked : false;
+    const bw2 = row.querySelector(`[name="cov_bw2_${id}"]`) ? row.querySelector(`[name="cov_bw2_${id}"]`).checked : false;
+    const bw3 = row.querySelector(`[name="cov_bw3_${id}"]`) ? row.querySelector(`[name="cov_bw3_${id}"]`).checked : false;
+    const f1 = bw1 ? 'filter: grayscale(100%); -webkit-filter: grayscale(100%);' : '';
+    const f2 = bw2 ? 'filter: grayscale(100%); -webkit-filter: grayscale(100%);' : '';
+    const f3 = bw3 ? 'filter: grayscale(100%); -webkit-filter: grayscale(100%);' : '';
+
+    const topText = row.querySelector(`[name="cov_top_${id}"]`).value || '';
+    const title = row.querySelector(`[name="title_${id}"]`).value || '';
     const subInput = row.querySelector(`[name="subtitle_${id}"]`) || row.querySelector(`[name="text_${id}"]`);
     const sub = subInput ? subInput.value : '';
+
+    // Вытягиваем новые настройки
+    const tSize = row.querySelector(`[name="cov_tsize_${id}"]`) ? row.querySelector(`[name="cov_tsize_${id}"]`).value : 40;
+    const sSize = row.querySelector(`[name="cov_ssize_${id}"]`) ? row.querySelector(`[name="cov_ssize_${id}"]`).value : 16;
+    const cHeight = row.querySelector(`[name="cov_height_${id}"]`) ? row.querySelector(`[name="cov_height_${id}"]`).value : 100;
 
     const preview = document.getElementById(`live_preview_${id}`);
     if(!preview) return;
     preview.style.gap = gap + 'px';
+    preview.style.height = (cHeight * 3) + 'px'; // Визуально меняем высоту превью
 
     let imgs = [];
     for(let i=1; i<=3; i++) {
@@ -150,20 +204,44 @@ function updateLiveCover(row) {
         else if(hidden && hidden.value) imgs.push('/static/uploads/' + hidden.value);
     }
 
-    let html = '';
+    let html = `<div style="display:flex; width:100%; height:100%;">`;
     if(imgs.length === 3) {
-        html += `<div style="flex:1; height:100%; background:url('${imgs[0]}') center/cover; clip-path: polygon(0 0, 100% 0, calc(100% - ${angle}%) 100%, 0 100%);"></div><div style="flex:1; height:100%; background:url('${imgs[1]}') center/cover; clip-path: polygon(${angle}% 0, 100% 0, calc(100% - ${angle}%) 100%, 0 100%); margin-left: -${angle}%;"></div><div style="flex:1; height:100%; background:url('${imgs[2]}') center/cover; clip-path: polygon(${angle}% 0, 100% 0, 100% 100%, 0 100%); margin-left: -${angle}%;"></div>`;
+        html += `<div style="flex:1; height:100%; background:url('${imgs[0]}') center/cover; clip-path: polygon(0 0, 100% 0, calc(100% - ${angle}%) 100%, 0 100%); ${f1}"></div><div style="flex:1; height:100%; background:url('${imgs[1]}') center/cover; clip-path: polygon(${angle}% 0, 100% 0, calc(100% - ${angle}%) 100%, 0 100%); margin-left: -${angle}%; ${f2}"></div><div style="flex:1; height:100%; background:url('${imgs[2]}') center/cover; clip-path: polygon(${angle}% 0, 100% 0, 100% 100%, 0 100%); margin-left: -${angle}%; ${f3}"></div>`;
     } else if(imgs.length === 2) {
-        html += `<div style="flex:1; height:100%; background:url('${imgs[0]}') center/cover; clip-path: polygon(0 0, 100% 0, calc(100% - ${angle}%) 100%, 0 100%);"></div><div style="flex:1; height:100%; background:url('${imgs[1]}') center/cover; clip-path: polygon(${angle}% 0, 100% 0, 100% 100%, 0 100%); margin-left: -${angle}%;"></div>`;
+        html += `<div style="flex:1; height:100%; background:url('${imgs[0]}') center/cover; clip-path: polygon(0 0, 100% 0, calc(100% - ${angle}%) 100%, 0 100%); ${f1}"></div><div style="flex:1; height:100%; background:url('${imgs[1]}') center/cover; clip-path: polygon(${angle}% 0, 100% 0, 100% 100%, 0 100%); margin-left: -${angle}%; ${f2}"></div>`;
     } else if(imgs.length === 1) {
-        html += `<div style="width:100%; height:100%; background:url('${imgs[0]}') center/cover;"></div>`;
+        html += `<div style="width:100%; height:100%; background:url('${imgs[0]}') center/cover; ${f1}"></div>`;
     } else {
         html += `<div style="width:100%; height:100%; background:#e5e7eb; display:flex; align-items:center; justify-content:center; color:#9ca3af; font-size:10px;">Нет фото</div>`;
     }
+    html += `</div>`;
 
-    if(grad > 0) html += `<div style="position: absolute; bottom:0; left:0; width:100%; height:80%; background: linear-gradient(to top, rgba(0,0,0,${grad/100}), transparent); pointer-events: none;"></div>`;
-    const txtShadow = shadow ? 'text-shadow: 0 2px 10px rgba(0,0,0,0.8);' : '';
-    html += `<div style="position:absolute; top:10px; left:15px; color:${color}; ${txtShadow} font-size:8px; font-weight:bold; letter-spacing:1px; z-index:10;">${topText}</div><div style="position:absolute; bottom:15px; left:15px; color:${color}; ${txtShadow} z-index:10;"><h2 style="font-size:16px; margin:0; font-weight:900; line-height:1.1; text-transform:uppercase;">${title || 'Заголовок'}</h2><p style="font-size:10px; margin:0;">${sub}</p></div>`;
+    if(grad > 0) {
+        if (gradDir === 'top') html += `<div style="position: absolute; bottom:0; left:0; width:100%; height:80%; background: linear-gradient(to top, rgba(0,0,0,${grad/100}), transparent); pointer-events: none; z-index:5;"></div>`;
+        else if (gradDir === 'bottom') html += `<div style="position: absolute; top:0; left:0; width:100%; height:80%; background: linear-gradient(to bottom, rgba(0,0,0,${grad/100}), transparent); pointer-events: none; z-index:5;"></div>`;
+        else if (gradDir === 'center') html += `<div style="position: absolute; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle, rgba(0,0,0,${grad/100}) 0%, transparent 70%); pointer-events: none; z-index:5;"></div>`;
+    }
+
+    const shadowStyle = row.querySelector(`[name="cov_shstyle_${id}"]`) ? row.querySelector(`[name="cov_shstyle_${id}"]`).value : 'soft';
+    let txtShadow = '';
+    if(shadowInt > 0) {
+        const op = shadowInt/100;
+        if(shadowStyle === 'hard') txtShadow = `text-shadow: 2px 2px 0px rgba(0,0,0,${op});`;
+        else if(shadowStyle === 'outline') txtShadow = `text-shadow: -1px -1px 0 rgba(0,0,0,${op}), 1px -1px 0 rgba(0,0,0,${op}), -1px 1px 0 rgba(0,0,0,${op}), 1px 1px 0 rgba(0,0,0,${op}), 2px 2px 5px rgba(0,0,0,${op});`;
+        else txtShadow = `text-shadow: 0 4px 20px rgba(0,0,0,${op});`;
+    }
+
+    let posStyles = 'bottom:15px; left:15px; align-items:flex-start; text-align:left;';
+    if(textPos === 'bottom-center') posStyles = 'bottom:15px; left:50%; transform:translateX(-50%); align-items:center; text-align:center;';
+    else if(textPos === 'bottom-right') posStyles = 'bottom:15px; right:15px; align-items:flex-end; text-align:right;';
+    else if(textPos === 'center') posStyles = 'top:50%; left:50%; transform:translate(-50%, -50%); align-items:center; text-align:center;';
+
+    html += `<div style="position:absolute; ${posStyles} color:${color}; ${txtShadow} z-index:10; display:flex; flex-direction:column; width:90%;">
+        <div style="font-size:10px; font-weight:bold; letter-spacing:1px; margin-bottom:2px; text-transform:uppercase;">${topText}</div>
+        <h2 style="font-size:${Math.max(10, tSize/1.5)}px; margin:0; font-weight:900; line-height:1; text-transform:uppercase;">${title || 'Заголовок'}</h2>
+        <p style="font-size:${Math.max(8, sSize/1.5)}px; margin:2px 0 0 0;">${sub}</p>
+    </div>`;
+
     preview.innerHTML = html;
 }
 
@@ -176,17 +254,36 @@ function updateLiveText(row) {
     const bw = row.querySelector(`[name="txt_bw_${id}"]`).value;
     const previewDiv = row.querySelector('.text-live-preview');
     const bStyle = row.querySelector(`[name="txt_bstyle_${id}"]`) ? row.querySelector(`[name="txt_bstyle_${id}"]`).value : 'left';
+    const bLine = row.querySelector(`[name="txt_bline_${id}"]`) ? row.querySelector(`[name="txt_bline_${id}"]`).value : 'solid';
     const bRad = row.querySelector(`[name="txt_brad_${id}"]`) ? row.querySelector(`[name="txt_brad_${id}"]`).value : 0;
+    const imgPos = row.querySelector(`[name="txt_imgpos_${id}"]`) ? row.querySelector(`[name="txt_imgpos_${id}"]`).value : 'right';
+
     previewDiv.style.backgroundColor = bg;
     previewDiv.style.color = col;
     previewDiv.style.border = 'none';
     previewDiv.style.borderRadius = `${bRad}px`;
-    if (bStyle === 'all') previewDiv.style.border = `${bw}px solid ${bc}`;
-    else if (bStyle === 'double') previewDiv.style.border = `${bw}px double ${bc}`;
-    else if (bStyle === 'left') previewDiv.style.borderLeft = `${bw}px solid ${bc}`;
-    else if (bStyle === 'right') previewDiv.style.borderRight = `${bw}px solid ${bc}`;
-    else if (bStyle === 'top') previewDiv.style.borderTop = `${bw}px solid ${bc}`;
-    else if (bStyle === 'bottom') previewDiv.style.borderBottom = `${bw}px solid ${bc}`;
+    
+    if (bStyle === 'all') previewDiv.style.border = `${bw}px ${bLine} ${bc}`;
+    else if (bStyle === 'left') previewDiv.style.borderLeft = `${bw}px ${bLine} ${bc}`;
+    else if (bStyle === 'right') previewDiv.style.borderRight = `${bw}px ${bLine} ${bc}`;
+    else if (bStyle === 'top') previewDiv.style.borderTop = `${bw}px ${bLine} ${bc}`;
+    else if (bStyle === 'bottom') previewDiv.style.borderBottom = `${bw}px ${bLine} ${bc}`;
+
+    const textCol = row.querySelector('.text-col');
+    const imgCol = row.querySelector('.img-col');
+    if (textCol && imgCol) {
+        if (imgPos === 'left') {
+            textCol.classList.replace('order-1', 'order-2') || textCol.classList.add('order-2');
+            imgCol.classList.replace('order-2', 'order-1') || imgCol.classList.add('order-1');
+            imgCol.classList.replace('border-l', 'border-r') || imgCol.classList.add('border-r');
+            imgCol.classList.replace('pl-6', 'pr-6') || imgCol.classList.add('pr-6');
+        } else {
+            textCol.classList.replace('order-2', 'order-1') || textCol.classList.add('order-1');
+            imgCol.classList.replace('order-1', 'order-2') || imgCol.classList.add('order-2');
+            imgCol.classList.replace('border-r', 'border-l') || imgCol.classList.add('border-l');
+            imgCol.classList.replace('pr-6', 'pl-6') || imgCol.classList.add('pl-6');
+        }
+    }
 }
 
 function selectCatalogItem(itemId) {
@@ -218,62 +315,91 @@ function addCoverBlock() {
             <input type="hidden" name="block_ids[]" value="${id}"><input type="hidden" name="b_type_${id}" value="cover">
             <div class="absolute -left-12 top-1/2 transform -translate-y-1/2 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition"><button type="button" onclick="moveUp(this)" class="bg-gray-800 text-white p-2 rounded-full shadow hover:bg-black"><i class="fas fa-arrow-up"></i></button><button type="button" onclick="moveDown(this)" class="bg-gray-800 text-white p-2 rounded-full shadow hover:bg-black"><i class="fas fa-arrow-down"></i></button><button type="button" onclick="this.closest('.block-row').remove()" class="bg-red-500 text-white p-2 rounded-full shadow hover:bg-red-600 mt-4"><i class="fas fa-trash"></i></button></div>
             <div class="flex items-center mb-4"><span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-[10px] font-black uppercase"><i class="fas fa-image mr-1"></i> Обложка (Фото)</span></div>
+            
             <div class="grid grid-cols-12 gap-6">
                 <div class="col-span-6 space-y-4">
                     <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Надзаголовок</label><input type="text" name="cov_top_${id}" value="2026 / Коммерческое предложение" class="w-full text-xs font-bold outline-none border-b border-gray-200 pb-2"></div>
-                    <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Главный заголовок</label><input type="text" name="title_${id}" required class="w-full text-2xl font-black outline-none border-b border-gray-200 pb-2"></div>
-                    <div><label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Подзаголовок</label><input type="text" name="text_${id}" class="w-full text-md font-bold outline-none border-b border-gray-200 pb-2 text-gray-500"></div>
+                    <div class="flex gap-2"><div class="flex-1"><label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Главный заголовок</label><input type="text" name="title_${id}" required class="w-full text-2xl font-black outline-none border-b border-gray-200 pb-2" oninput="updateLiveCover(this.closest('.block-row'))"></div><div class="w-20"><label class="block text-[10px] font-black text-gray-400 uppercase mb-2 text-center">Размер</label><input type="number" name="cov_tsize_${id}" value="40" class="w-full border-b border-gray-200 pb-2 text-center font-bold outline-none" oninput="updateLiveCover(this.closest('.block-row'))"></div></div>
+                    <div class="flex gap-2"><div class="flex-1"><label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Подзаголовок</label><input type="text" name="text_${id}" class="w-full text-md font-bold outline-none border-b border-gray-200 pb-2 text-gray-500" oninput="updateLiveCover(this.closest('.block-row'))"></div><div class="w-20"><label class="block text-[10px] font-black text-gray-400 uppercase mb-2 text-center">Размер</label><input type="number" name="cov_ssize_${id}" value="16" class="w-full border-b border-gray-200 pb-2 text-center font-bold outline-none text-gray-500" oninput="updateLiveCover(this.closest('.block-row'))"></div></div>
                 </div>
-                <div class="col-span-3 bg-gray-50 p-4 rounded-xl space-y-4 border border-gray-200">
-                    <label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Настройки</label>
-                    <div><label class="block text-[10px] font-bold text-gray-500 mb-1">Срез</label><input type="range" name="cov_angle_${id}" min="0" max="30" value="10" class="w-full"></div>
+                <div class="col-span-3 bg-gray-50 p-4 rounded-xl space-y-3 border border-gray-200">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Сетка и Тень</label>
+                    <div><label class="block text-[10px] font-bold text-gray-500 mb-1">Высота блока (vh)</label><input type="range" name="cov_height_${id}" min="5" max="75" value="50" class="w-full accent-blue-500" oninput="updateLiveCover(this.closest('.block-row'))"></div><div><label class="block text-[10px] font-bold text-gray-500 mb-1">Срез</label><input type="range" name="cov_angle_${id}" min="0" max="30" value="10" class="w-full" oninput="updateLiveCover(this.closest('.block-row'))"></div>
                     <div><label class="block text-[10px] font-bold text-gray-500 mb-1">Зазор (px)</label><input type="range" name="cov_gap_${id}" min="0" max="20" value="5" class="w-full"></div>
-                    <div><label class="block text-[10px] font-bold text-gray-500 mb-1">Градиент (0-100%)</label><input type="range" name="cov_grad_${id}" min="0" max="100" value="70" class="w-full"></div>
-                    <div class="flex gap-4 items-center"><div><label class="block text-[10px] font-bold text-gray-500 mb-1">Текст</label><input type="color" name="cov_color_${id}" value="#ffffff" class="w-8 h-8 rounded border-none cursor-pointer"></div><div class="flex items-center mt-4"><input type="checkbox" name="cov_shadow_${id}" checked value="on" class="mr-1"><span class="text-[10px] font-bold text-gray-500">Тень</span></div></div>
+                    <div class="flex gap-2 items-center mt-2">
+                        <div><label class="block text-[10px] font-bold text-gray-500 mb-1">Цвет</label><input type="color" name="cov_color_${id}" value="#ffffff" class="w-8 h-8 rounded border-none cursor-pointer" oninput="updateLiveCover(this.closest('.block-row'))"></div>
+                        <div class="flex-1"><label class="block text-[10px] font-bold text-gray-500 mb-1">Стиль тени</label><select name="cov_shstyle_${id}" class="w-full h-8 text-[10px] border border-gray-200 rounded outline-none" onchange="updateLiveCover(this.closest('.block-row'))"><option value="soft">Мягкая</option><option value="hard">Жесткая</option><option value="outline">Обводка</option></select></div>
+                        <div class="flex-1"><label class="block text-[10px] font-bold text-gray-500 mb-1">Сила тени</label><input type="range" name="cov_shadow_${id}" min="0" max="100" value="80" class="w-full" oninput="updateLiveCover(this.closest('.block-row'))"></div>
+                    </div>
                 </div>
-                <div class="col-span-3"><label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Live-превью</label><div id="live_preview_${id}" class="w-full h-48 rounded-xl bg-gray-100 overflow-hidden relative flex border border-gray-200 shadow-inner"></div></div>
+                <div class="col-span-3 bg-gray-50 p-4 rounded-xl space-y-3 border border-gray-200">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Текст и Градиент</label>
+                    <div><label class="block text-[10px] font-bold text-gray-500 mb-1">Градиент</label><select name="cov_graddir_${id}" class="w-full h-6 text-[10px] border border-gray-200 rounded outline-none"><option value="top">Снизу вверх</option><option value="bottom">Сверху вниз</option><option value="center">Из центра</option></select></div>
+                    <div><label class="block text-[10px] font-bold text-gray-500 mb-1">Затемнение</label><input type="range" name="cov_grad_${id}" min="0" max="100" value="70" class="w-full"></div>
+                    <div><label class="block text-[10px] font-bold text-gray-500 mb-1">Позиция</label><select name="cov_textpos_${id}" class="w-full h-6 text-[10px] border border-gray-200 rounded outline-none"><option value="bottom-left">Внизу слева</option><option value="bottom-center">Внизу по центру</option><option value="bottom-right">Внизу справа</option><option value="center">По центру</option></select></div>
+                </div>
             </div>
+            
+            <div class="mt-4 mb-2">
+                <label class="block text-[10px] font-black text-purple-500 uppercase mb-2">Live-превью</label>
+                <div id="live_preview_${id}" class="w-full h-48 rounded-xl bg-gray-100 overflow-hidden relative flex border border-gray-200 shadow-inner"></div>
+            </div>
+
             <div class="mt-6 border-t border-purple-100 pt-4">
                 <label class="block text-[10px] font-black text-purple-500 uppercase mb-2">Фото (до 3 шт)</label>
                 <div class="flex gap-4">
-                    <div class="w-1/3 relative"><input type="file" name="img1_${id}" id="in1_${id}" accept="image/*" onchange="previewImageRow(this); updateLiveCover(this.closest('.block-row'))" class="text-xs file:bg-purple-50 w-full mb-1"><img src="#" id="pr1_${id}" class="hidden w-full h-20 object-cover rounded-lg border border-gray-200"><button type="button" onclick="clearImage('in1_${id}', 'pr1_${id}')" class="absolute top-8 right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs hover:bg-red-600 hidden"><i class="fas fa-trash"></i></button></div>
-                    <div class="w-1/3 relative"><input type="file" name="img2_${id}" id="in2_${id}" accept="image/*" onchange="previewImageRow(this); updateLiveCover(this.closest('.block-row'))" class="text-xs file:bg-purple-50 w-full mb-1"><img src="#" id="pr2_${id}" class="hidden w-full h-20 object-cover rounded-lg border border-gray-200"><button type="button" onclick="clearImage('in2_${id}', 'pr2_${id}')" class="absolute top-8 right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs hover:bg-red-600 hidden"><i class="fas fa-trash"></i></button></div>
-                    <div class="w-1/3 relative"><input type="file" name="img3_${id}" id="in3_${id}" accept="image/*" onchange="previewImageRow(this); updateLiveCover(this.closest('.block-row'))" class="text-xs file:bg-purple-50 w-full mb-1"><img src="#" id="pr3_${id}" class="hidden w-full h-20 object-cover rounded-lg border border-gray-200"><button type="button" onclick="clearImage('in3_${id}', 'pr3_${id}')" class="absolute top-8 right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs hover:bg-red-600 hidden"><i class="fas fa-trash"></i></button></div>
+                    <div class="w-1/3 relative"><input type="file" name="img1_${id}" id="in1_${id}" accept="image/*" onchange="previewImageRow(this); updateLiveCover(this.closest('.block-row'))" class="text-xs file:bg-purple-50 w-full mb-1"><img src="#" id="pr1_${id}" class="hidden w-full h-20 object-cover rounded-lg border border-gray-200"><button type="button" onclick="clearImage('in1_${id}', 'pr1_${id}')" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-xl text-xs hover:bg-red-600 hidden shadow-lg flex items-center justify-center"><i class="fas fa-trash"></i></button><label onclick="event.stopPropagation()" class="absolute z-50 bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-white flex items-center gap-1 cursor-pointer hover:bg-black/80 transition"><input type="checkbox" name="cov_bw1_${id}" value="on" class="accent-purple-500" onchange="updateLiveCover(this.closest('.block-row'))"><span class="text-[9px] font-bold uppercase">ЧБ</span></label></div>
+                    <div class="w-1/3 relative"><input type="file" name="img2_${id}" id="in2_${id}" accept="image/*" onchange="previewImageRow(this); updateLiveCover(this.closest('.block-row'))" class="text-xs file:bg-purple-50 w-full mb-1"><img src="#" id="pr2_${id}" class="hidden w-full h-20 object-cover rounded-lg border border-gray-200"><button type="button" onclick="clearImage('in2_${id}', 'pr2_${id}')" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-xl text-xs hover:bg-red-600 hidden shadow-lg flex items-center justify-center"><i class="fas fa-trash"></i></button><label onclick="event.stopPropagation()" class="absolute z-50 bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-white flex items-center gap-1 cursor-pointer hover:bg-black/80 transition"><input type="checkbox" name="cov_bw2_${id}" value="on" class="accent-purple-500" onchange="updateLiveCover(this.closest('.block-row'))"><span class="text-[9px] font-bold uppercase">ЧБ</span></label></div>
+                    <div class="w-1/3 relative"><input type="file" name="img3_${id}" id="in3_${id}" accept="image/*" onchange="previewImageRow(this); updateLiveCover(this.closest('.block-row'))" class="text-xs file:bg-purple-50 w-full mb-1"><img src="#" id="pr3_${id}" class="hidden w-full h-20 object-cover rounded-lg border border-gray-200"><button type="button" onclick="clearImage('in3_${id}', 'pr3_${id}')" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-xl text-xs hover:bg-red-600 hidden shadow-lg flex items-center justify-center"><i class="fas fa-trash"></i></button><label onclick="event.stopPropagation()" class="absolute z-50 bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-white flex items-center gap-1 cursor-pointer hover:bg-black/80 transition"><input type="checkbox" name="cov_bw3_${id}" value="on" class="accent-purple-500" onchange="updateLiveCover(this.closest('.block-row'))"><span class="text-[9px] font-bold uppercase">ЧБ</span></label></div>
                 </div>
             </div>
         </div>`;
     document.getElementById('blocksList').insertAdjacentHTML('beforeend', html);
-    updateLiveCover(document.getElementById(`live_preview_${id}`).closest('.block-row'));
+    setTimeout(() => updateLiveCover(document.getElementById(`live_preview_${id}`).closest('.block-row')), 50);
 }
+
 
 function addTextBlock() {
     const id = Date.now();
     const html = `
-        <div class="block-row bg-white p-6 rounded-3xl shadow-sm border-2 border-blue-100 relative group transition-all" oninput="updateLiveText(this)">
+        <div class="block-row bg-white p-6 rounded-3xl shadow-sm border border-blue-100 relative group transition-all hover:shadow-md" oninput="updateLiveText(this)">
             <input type="hidden" name="block_ids[]" value="${id}"><input type="hidden" name="b_type_${id}" value="text">
-            <div class="absolute -left-12 top-1/2 transform -translate-y-1/2 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition"><button type="button" onclick="moveUp(this)" class="bg-gray-800 text-white p-2 rounded-full shadow"><i class="fas fa-arrow-up"></i></button><button type="button" onclick="moveDown(this)" class="bg-gray-800 text-white p-2 rounded-full shadow"><i class="fas fa-arrow-down"></i></button><button type="button" onclick="this.closest('.block-row').remove()" class="bg-red-500 text-white p-2 rounded-full shadow mt-4"><i class="fas fa-trash"></i></button></div>
+            <div class="absolute -left-14 top-1/2 transform -translate-y-1/2 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition z-10"><button type="button" onclick="moveUp(this)" class="bg-gray-800 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow hover:bg-gray-700 transition"><i class="fas fa-arrow-up"></i></button><button type="button" onclick="moveDown(this)" class="bg-gray-800 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow hover:bg-gray-700 transition"><i class="fas fa-arrow-down"></i></button><button type="button" onclick="this.closest('.block-row').remove()" class="bg-red-500 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow mt-4 hover:bg-red-600 transition"><i class="fas fa-trash"></i></button></div>
             <div class="flex justify-between items-center mb-4">
-                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black uppercase"><i class="fas fa-align-left mr-1"></i> Текстовый блок</span>
-                <div class="flex space-x-4 bg-gray-50 px-4 py-2 rounded-xl border border-gray-200 items-center">
-                    <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500">Фон</span><input type="color" name="txt_bg_${id}" value="#f9fafb" class="w-6 h-6 rounded border-none cursor-pointer"></div>
-                    <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500">Текст</span><input type="color" name="txt_color_${id}" value="#333333" class="w-6 h-6 rounded border-none cursor-pointer"></div>
-                    <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500">Линия</span><input type="color" name="txt_bc_${id}" value="#2563eb" class="w-6 h-6 rounded border-none cursor-pointer"></div>
-                    <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500">Толщина</span><input type="number" name="txt_bw_${id}" value="4" min="0" max="20" class="w-12 h-6 text-xs text-center border rounded outline-none"></div>
-                    <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500">Рамка</span><select name="txt_bstyle_${id}" onchange="updateLiveText(this.closest('.block-row'))" class="h-6 text-xs border rounded outline-none bg-white"><option value="left">Слева</option><option value="all">Вокруг</option><option value="double">Двойная</option><option value="right">Справа</option><option value="top">Сверху</option><option value="bottom">Снизу</option></select></div>
-                    <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500">Скругление</span><input type="range" name="txt_brad_${id}" value="0" min="0" max="50" oninput="updateLiveText(this.closest('.block-row'))" class="w-16"></div>
+                <span class="bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest"><i class="fas fa-align-left mr-1"></i> Текстовый блок</span>
+                <div class="flex flex-wrap gap-4 bg-gray-50/50 px-5 py-2.5 rounded-2xl border border-gray-100 items-center">
+                    <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-1">Позиция Фото</span><select name="txt_imgpos_${id}" onchange="updateLiveText(this.closest('.block-row'))" class="h-6 text-[10px] font-bold border border-gray-200 rounded-lg outline-none bg-white text-gray-700 focus:border-blue-500"><option value="right">Справа</option><option value="left">Слева</option></select></div>
+                    <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-1">Фон / Текст</span><div class="flex gap-1"><input type="color" name="txt_bg_${id}" value="#f9fafb" class="w-6 h-6 rounded shadow-sm border-none cursor-pointer"><input type="color" name="txt_color_${id}" value="#333333" class="w-6 h-6 rounded shadow-sm border-none cursor-pointer"></div></div>
+                    <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-1">Рамка</span><input type="color" name="txt_bc_${id}" value="#2563eb" class="w-6 h-6 rounded shadow-sm border-none cursor-pointer"></div>
+                    <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-1">Толщина</span><input type="number" name="txt_bw_${id}" value="4" min="0" max="20" class="w-12 h-6 text-xs text-center border border-gray-200 rounded-lg outline-none font-mono text-gray-700 focus:border-blue-500"></div>
+                    <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-1">Стиль линии</span><select name="txt_bline_${id}" onchange="updateLiveText(this.closest('.block-row'))" class="h-6 text-[10px] font-bold border border-gray-200 rounded-lg outline-none bg-white text-gray-700 focus:border-blue-500"><option value="solid">Сплошная</option><option value="dashed">Пунктир</option><option value="dotted">Точки</option><option value="double">Двойная</option></select></div>
+                    <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-1">Сторона</span><select name="txt_bstyle_${id}" onchange="updateLiveText(this.closest('.block-row'))" class="h-6 text-[10px] font-bold border border-gray-200 rounded-lg outline-none bg-white text-gray-700 focus:border-blue-500"><option value="left">Слева</option><option value="all">Вокруг</option><option value="right">Справа</option><option value="top">Сверху</option><option value="bottom">Снизу</option></select></div>
+                    <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-1">Скругление</span><input type="range" name="txt_brad_${id}" value="0" min="0" max="50" oninput="updateLiveText(this.closest('.block-row'))" class="w-16 accent-blue-500"></div>
                 </div>
             </div>
-            <div class="grid grid-cols-4 gap-6">
-                <div class="col-span-3">
-                    <div class="mb-2 flex items-center bg-gray-50 p-1.5 rounded-lg border border-gray-200 w-max"><button type="button" onclick="execCmd('bold')" class="font-bold w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded text-sm shadow-sm mr-1">Ж</button><button type="button" onclick="execCmd('italic')" class="italic w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded text-sm shadow-sm mr-1">К</button><button type="button" onclick="execCmd('underline')" class="underline w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded text-sm shadow-sm mr-2">Ч</button><div class="w-px h-6 bg-gray-300 mx-1"></div><button type="button" onclick="execCmd('justifyLeft')" class="w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded text-sm shadow-sm text-gray-600 ml-2 mr-1"><i class="fas fa-align-left"></i></button><button type="button" onclick="execCmd('justifyCenter')" class="w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded text-sm shadow-sm text-gray-600 mr-1"><i class="fas fa-align-center"></i></button><button type="button" onclick="execCmd('justifyRight')" class="w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded text-sm shadow-sm text-gray-600 mr-2"><i class="fas fa-align-right"></i></button><div class="w-px h-6 bg-gray-300 mx-1"></div><button type="button" onclick="execCmd('removeFormat')" class="w-8 h-8 flex items-center justify-center bg-white hover:bg-red-50 rounded text-sm shadow-sm text-red-500 ml-2" title="Очистить"><i class="fas fa-eraser"></i></button></div>
-                    <div contenteditable="true" data-id="${id}" class="text-live-preview w-full min-h-[120px] p-4 rounded-xl outline-none transition-all" style="background-color:#f9fafb; color:#333333; border-left:4px solid #2563eb;" onkeyup="updateRichText(this)">Напишите текст...</div>
+            <div class="grid grid-cols-4 gap-6 text-grid-container">
+                <div class="col-span-3 text-col order-1 transition-all">
+                    <div class="mb-2 flex flex-wrap gap-1 items-center bg-gray-50 p-1.5 rounded-xl border border-gray-100 shadow-sm">
+                        <button type="button" onclick="execCmd('bold')" class="font-bold w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded-lg text-sm shadow-sm transition">Ж</button><button type="button" onclick="execCmd('italic')" class="italic w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded-lg text-sm shadow-sm transition">К</button><button type="button" onclick="execCmd('underline')" class="underline w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded-lg text-sm shadow-sm transition">Ч</button><button type="button" onclick="execCmd('strikeThrough')" class="line-through w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded-lg text-sm shadow-sm transition text-gray-600">S</button>
+                        <div class="w-px h-6 bg-gray-200 mx-1"></div>
+                        <select onchange="execCmd('formatBlock', this.value); this.selectedIndex=0;" class="h-8 text-xs font-bold border border-gray-200 rounded-lg outline-none bg-white text-gray-600 px-2 cursor-pointer"><option value="">Заголовки...</option><option value="<H2>">Заголовок 1 (Крупный)</option><option value="<H3>">Заголовок 2 (Средний)</option><option value="<P>">Обычный текст</option></select>
+                        <div class="w-px h-6 bg-gray-200 mx-1"></div>
+                        <button type="button" onmousedown="event.preventDefault();" onclick="document.execCommand(\'insertUnorderedList\', false, null);" class="p-2 text-gray-500 hover:text-blue-500 hover:bg-blue-50 rounded transition" title="Маркированный список"><i class="fas fa-list-ul"></i></button><button type="button" onmousedown="event.preventDefault();" onclick="document.execCommand(\'insertOrderedList\', false, null);" class="p-2 text-gray-500 hover:text-blue-500 hover:bg-blue-50 rounded transition" title="Нумерованный список"><i class="fas fa-list-ol"></i></button>
+                        <div class="w-px h-6 bg-gray-200 mx-1"></div>
+                        <button type="button" onclick="addLink()" class="w-8 h-8 flex items-center justify-center bg-white hover:bg-blue-50 rounded-lg text-sm shadow-sm text-blue-500 transition" title="Вставить ссылку"><i class="fas fa-link"></i></button>
+                        <div class="w-px h-6 bg-gray-200 mx-1"></div>
+                        <button type="button" onclick="execCmd('justifyLeft')" class="w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded-lg text-sm shadow-sm text-gray-600 transition"><i class="fas fa-align-left"></i></button><button type="button" onclick="execCmd('justifyCenter')" class="w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded-lg text-sm shadow-sm text-gray-600 transition"><i class="fas fa-align-center"></i></button><button type="button" onclick="execCmd('justifyRight')" class="w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded-lg text-sm shadow-sm text-gray-600 transition"><i class="fas fa-align-right"></i></button>
+                        <div class="w-px h-6 bg-gray-200 mx-1"></div>
+                        <button type="button" onclick="execCmd('removeFormat')" class="w-8 h-8 flex items-center justify-center bg-white hover:bg-red-50 rounded-lg text-sm shadow-sm text-red-500 transition" title="Очистить стили"><i class="fas fa-eraser"></i></button>
+                    </div>
+                    <div contenteditable="true" data-id="${id}" class="text-live-preview w-full min-h-[120px] p-5 rounded-2xl outline-none transition-all text-sm leading-relaxed" style="background-color:#f9fafb; color:#333333; border-left:4px solid #2563eb;" onkeyup="updateRichText(this)">Напишите текст...</div>
                     <input type="hidden" name="text_${id}" id="text_${id}" value="Напишите текст...">
                 </div>
-                <div class="col-span-1 border-l border-gray-100 pl-6 space-y-3">
-                    <label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Фото (до 3 шт)</label>
-                    <div class="relative"><input type="file" name="img1_${id}" id="in1_t_${id}" accept="image/*" onchange="previewImageRow(this)" class="text-xs file:bg-blue-50 w-full mb-1"><img src="#" id="pr1_t_${id}" class="hidden w-full aspect-square object-cover rounded-lg border border-gray-200"><button type="button" onclick="clearImage('in1_t_${id}', 'pr1_t_${id}')" class="absolute top-8 right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs hover:bg-red-600 hidden"><i class="fas fa-trash"></i></button></div>
-                    <div class="relative"><input type="file" name="img2_${id}" id="in2_t_${id}" accept="image/*" onchange="previewImageRow(this)" class="text-xs file:bg-blue-50 w-full mb-1"><img src="#" id="pr2_t_${id}" class="hidden w-full aspect-square object-cover rounded-lg border border-gray-200"><button type="button" onclick="clearImage('in2_t_${id}', 'pr2_t_${id}')" class="absolute top-8 right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs hover:bg-red-600 hidden"><i class="fas fa-trash"></i></button></div>
-                    <div class="relative"><input type="file" name="img3_${id}" id="in3_t_${id}" accept="image/*" onchange="previewImageRow(this)" class="text-xs file:bg-blue-50 w-full mb-1"><img src="#" id="pr3_t_${id}" class="hidden w-full aspect-square object-cover rounded-lg border border-gray-200"><button type="button" onclick="clearImage('in3_t_${id}', 'pr3_t_${id}')" class="absolute top-8 right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs hover:bg-red-600 hidden"><i class="fas fa-trash"></i></button></div>
+                <div class="col-span-1 img-col order-2 border-l border-gray-100 pl-6 space-y-3 transition-all">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest">Фото (до 3 шт)</label>
+                    <div class="relative"><input type="file" name="img1_${id}" id="in1_t_${id}" accept="image/*" onchange="previewImageRow(this)" class="text-xs file:bg-blue-50 w-full mb-1"><img src="#" id="pr1_t_${id}" class="hidden w-full aspect-square object-cover rounded-2xl border border-gray-200"><button type="button" onclick="clearImage('in1_t_${id}', 'pr1_t_${id}')" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-xl flex items-center justify-center text-xs hover:bg-red-600 hidden transition shadow-lg"><i class="fas fa-trash"></i></button></div>
+                    <div class="relative"><input type="file" name="img2_${id}" id="in2_t_${id}" accept="image/*" onchange="previewImageRow(this)" class="text-xs file:bg-blue-50 w-full mb-1"><img src="#" id="pr2_t_${id}" class="hidden w-full aspect-square object-cover rounded-2xl border border-gray-200"><button type="button" onclick="clearImage('in2_t_${id}', 'pr2_t_${id}')" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-xl flex items-center justify-center text-xs hover:bg-red-600 hidden transition shadow-lg"><i class="fas fa-trash"></i></button></div>
+                    <div class="relative"><input type="file" name="img3_${id}" id="in3_t_${id}" accept="image/*" onchange="previewImageRow(this)" class="text-xs file:bg-blue-50 w-full mb-1"><img src="#" id="pr3_t_${id}" class="hidden w-full aspect-square object-cover rounded-2xl border border-gray-200"><button type="button" onclick="clearImage('in3_t_${id}', 'pr3_t_${id}')" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-xl flex items-center justify-center text-xs hover:bg-red-600 hidden transition shadow-lg"><i class="fas fa-trash"></i></button></div>
                 </div>
             </div>
         </div>`;
@@ -444,5 +570,181 @@ function attachProposalAIButtons() {
     });
 }
 setInterval(attachProposalAIButtons, 1000);
+
+function addBeforeAfterBlock() {
+    const id = Date.now();
+    const html = `
+        <div class="block-row bg-white p-6 rounded-3xl shadow-sm border border-gray-200 relative group transition-all hover:shadow-md">
+            <input type="hidden" name="block_ids[]" value="${id}"><input type="hidden" name="b_type_${id}" value="before_after">
+            <div class="absolute -left-14 top-1/2 transform -translate-y-1/2 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition z-10"><button type="button" onclick="moveUp(this)" class="bg-gray-800 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow hover:bg-gray-700 transition"><i class="fas fa-arrow-up"></i></button><button type="button" onclick="moveDown(this)" class="bg-gray-800 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow hover:bg-gray-700 transition"><i class="fas fa-arrow-down"></i></button><button type="button" onclick="this.closest('.block-row').remove()" class="bg-red-500 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow mt-4 hover:bg-red-600 transition"><i class="fas fa-trash"></i></button></div>
+            <div class="flex items-center mb-4"><span class="bg-gray-100 text-gray-700 border border-gray-200 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest"><i class="fas fa-columns mr-1"></i> До / После</span></div>
+
+            <div class="grid grid-cols-2 gap-6">
+                <div class="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 space-y-3">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Фото 1</label>
+                    <div class="relative no-upgrade w-full h-56 border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center bg-gray-50/50 hover:bg-gray-100 hover:border-blue-300 transition overflow-hidden group">
+                        <input type="file" name="img1_${id}" id="in1_ba_${id}" accept="image/*" onchange="if(this.files[0]){const img=this.parentElement.querySelector(\'img\');img.src=URL.createObjectURL(this.files[0]);img.classList.remove(\'hidden\');const btn=this.parentElement.querySelector(\'button\');if(btn)btn.classList.remove(\'hidden\');}" class="absolute inset-0 opacity-0 cursor-pointer z-10 w-full h-full">
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 group-hover:text-blue-500 pointer-events-none transition z-0"><i class="fas fa-cloud-upload-alt text-3xl mb-2"></i><span class="text-[10px] font-black uppercase tracking-widest">Загрузить фото</span></div>
+                        <img src="#" id="pr1_ba_${id}" class="hidden absolute inset-0 w-full h-full object-cover z-20 pointer-events-none bg-white">
+                        <button type="button" onclick="clearImage('in1_ba_${id}', 'pr1_ba_${id}')" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-xl flex items-center justify-center text-xs hover:bg-red-600 hidden transition shadow-lg z-30 pointer-events-auto"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <input type="text" name="ba_cap1_${id}" placeholder="Подпись (например: До монтажа)..." class="w-full bg-white p-3 rounded-xl font-medium outline-none border border-gray-200 text-sm focus:border-blue-500 transition shadow-sm text-center">
+                </div>
+                <div class="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 space-y-3">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Фото 2</label>
+                    <div class="relative no-upgrade w-full h-56 border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center bg-gray-50/50 hover:bg-gray-100 hover:border-blue-300 transition overflow-hidden group">
+                        <input type="file" name="img2_${id}" id="in2_ba_${id}" accept="image/*" onchange="if(this.files[0]){const img=this.parentElement.querySelector(\'img\');img.src=URL.createObjectURL(this.files[0]);img.classList.remove(\'hidden\');const btn=this.parentElement.querySelector(\'button\');if(btn)btn.classList.remove(\'hidden\');}" class="absolute inset-0 opacity-0 cursor-pointer z-10 w-full h-full">
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 group-hover:text-blue-500 pointer-events-none transition z-0"><i class="fas fa-cloud-upload-alt text-3xl mb-2"></i><span class="text-[10px] font-black uppercase tracking-widest">Загрузить фото</span></div>
+                        <img src="#" id="pr2_ba_${id}" class="hidden absolute inset-0 w-full h-full object-cover z-20 pointer-events-none bg-white">
+                        <button type="button" onclick="clearImage('in2_ba_${id}', 'pr2_ba_${id}')" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-xl flex items-center justify-center text-xs hover:bg-red-600 hidden transition shadow-lg z-30 pointer-events-auto"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <input type="text" name="ba_cap2_${id}" placeholder="Подпись (например: Проектное решение)..." class="w-full bg-white p-3 rounded-xl font-medium outline-none border border-gray-200 text-sm focus:border-blue-500 transition shadow-sm text-center">
+                </div>
+            </div>
+        </div>`;
+    document.getElementById('blocksList').insertAdjacentHTML('beforeend', html);
+}
+
 </script>
+
+<script>
+// Умный перехватчик: ловит загрузку фото в блоках До/После и показывает их поверх облака
+document.addEventListener('change', function(e) {
+    if (e.target && e.target.type === 'file' && e.target.id && e.target.id.includes('_ba_')) {
+        const wrapper = e.target.closest('.relative');
+        if (!wrapper) return;
+        
+        const img = wrapper.querySelector('img');
+        const btn = wrapper.querySelector('button');
+        
+        if (e.target.files && e.target.files[0]) {
+            img.src = URL.createObjectURL(e.target.files[0]);
+            img.classList.remove('hidden');
+            img.style.display = 'block';
+            img.style.zIndex = '20'; // Гарантированно перекрываем облако
+            
+            if (btn) {
+                btn.classList.remove('hidden');
+                btn.style.display = 'flex';
+            }
+        }
+    }
+});
+</script>
+
+
+
+
+
+<!-- ВОССТАНОВЛЕНИЕ СТИЛЕЙ РЕДАКТОРА -->
+<style>
+    /* Tailwind CSS сбрасывает стили заголовков и списков. 
+       Этот код железно возвращает их обратно только для окон редактирования */
+    
+    /* Для заголовков */
+    .block-row h1, [contenteditable="true"] h1, .editor h1 { font-size: 2.25em !important; font-weight: 800 !important; line-height: 1.2 !important; margin: 0.5em 0 !important; }
+    .block-row h2, [contenteditable="true"] h2, .editor h2 { font-size: 1.875em !important; font-weight: 700 !important; line-height: 1.3 !important; margin: 0.5em 0 !important; }
+    .block-row h3, [contenteditable="true"] h3, .editor h3 { font-size: 1.5em !important; font-weight: 600 !important; line-height: 1.4 !important; margin: 0.5em 0 !important; }
+    .block-row h4, [contenteditable="true"] h4, .editor h4 { font-size: 1.25em !important; font-weight: 600 !important; margin: 0.5em 0 !important; }
+    
+    /* Для списков (маркированных и нумерованных) */
+    .block-row ul, [contenteditable="true"] ul, .editor ul { list-style-type: disc !important; padding-left: 2em !important; margin: 0.5em 0 !important; }
+    .block-row ol, [contenteditable="true"] ol, .editor ol { list-style-type: decimal !important; padding-left: 2em !important; margin: 0.5em 0 !important; }
+    
+    /* Для жирного текста и курсива */
+    .block-row b, .block-row strong, [contenteditable="true"] b, [contenteditable="true"] strong { font-weight: bolder !important; }
+    .block-row i, .block-row em, [contenteditable="true"] i, [contenteditable="true"] em { font-style: italic !important; }
+    
+    /* Универсальный фикс для популярных редакторов (Trumbowyg, Quill, TinyMCE, Summernote), 
+       если в проекте используется один из них */
+    .trumbowyg-editor h1, .ql-editor h1, .note-editable h1, .tox h1 { font-size: 2.25em !important; font-weight: 800 !important; }
+    .trumbowyg-editor h2, .ql-editor h2, .note-editable h2, .tox h2 { font-size: 1.875em !important; font-weight: 700 !important; }
+    .trumbowyg-editor ul, .ql-editor ul, .note-editable ul, .tox ul { list-style-type: disc !important; padding-left: 2em !important; }
+    .trumbowyg-editor ol, .ql-editor ol, .note-editable ol, .tox ol { list-style-type: decimal !important; padding-left: 2em !important; }
+</style>
+
+
+<!-- СИСТЕМА ВОССТАНОВЛЕНИЯ СТИЛЕЙ РЕДАКТОРА -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // 1. Внедряем неубиваемые стили прямо в <head> страницы
+    const style = document.createElement('style');
+    style.innerHTML = `
+        /* Эти стили перебивают Tailwind и работают для ВСЕХ блоков (новых и старых) */
+        div[contenteditable="true"] h1, div[contenteditable="true"] * h1 { font-size: 2.25rem !important; font-weight: 900 !important; line-height: 1.2 !important; margin: 0.5rem 0 !important; display: block !important; color: inherit !important; }
+        div[contenteditable="true"] h2, div[contenteditable="true"] * h2 { font-size: 1.875rem !important; font-weight: 800 !important; line-height: 1.3 !important; margin: 0.5rem 0 !important; display: block !important; color: inherit !important; }
+        div[contenteditable="true"] h3, div[contenteditable="true"] * h3 { font-size: 1.5rem !important; font-weight: 700 !important; line-height: 1.4 !important; margin: 0.5rem 0 !important; display: block !important; color: inherit !important; }
+        
+        div[contenteditable="true"] ul, div[contenteditable="true"] * ul { list-style-type: disc !important; padding-left: 2rem !important; margin: 0.5rem 0 !important; display: block !important; }
+        div[contenteditable="true"] ol, div[contenteditable="true"] * ol { list-style-type: decimal !important; padding-left: 2rem !important; margin: 0.5rem 0 !important; display: block !important; }
+        div[contenteditable="true"] li { display: list-item !important; }
+        
+        div[contenteditable="true"] a,  div[contenteditable="true"] * a  { color: #2563eb !important; text-decoration: underline !important; cursor: pointer !important; }
+        div[contenteditable="true"] b,  div[contenteditable="true"] strong { font-weight: 900 !important; }
+        div[contenteditable="true"] i,  div[contenteditable="true"] em { font-style: italic !important; }
+    `;
+    document.head.appendChild(style);
+
+    // 2. Лечим потерю фокуса у ВСЕХ кнопок форматирования в загруженных блоках
+    document.querySelectorAll('button').forEach(btn => {
+        const title = btn.getAttribute('title') || '';
+        const onclick = btn.getAttribute('onclick') || '';
+        // Находим кнопки редактора и запрещаем им отбирать фокус при клике
+        if (title.includes('заголовок') || title.includes('список') || onclick.includes('execCommand') || onclick.includes('format')) {
+            btn.setAttribute('onmousedown', 'event.preventDefault();');
+        }
+    });
+    
+    // 3. Автоматически добавляем защитные классы Tailwind всем старым редакторам
+    document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+        el.classList.add('prose', 'prose-sm', 'max-w-none');
+    });
+});
+</script>
+
+
+<!-- ЖЕЛЕЗОБЕТОННЫЕ СПИСКИ (Динамический перехват) -->
+<style>
+    /* На всякий случай дублируем жесткий стиль для точек и цифр */
+    [contenteditable="true"] ul, .editor ul { list-style-type: disc !important; padding-left: 2rem !important; margin: 0.5rem 0 !important; display: block !important; }
+    [contenteditable="true"] ol, .editor ol { list-style-type: decimal !important; padding-left: 2rem !important; margin: 0.5rem 0 !important; display: block !important; }
+    [contenteditable="true"] li, .editor li { display: list-item !important; margin-left: 0.5rem !important; }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Находим все кнопки на странице
+    const buttons = document.querySelectorAll('button');
+    
+    buttons.forEach(btn => {
+        // Ищем кнопки списков чисто по их иконкам (это работает на 100%)
+        if (btn.innerHTML.includes('fa-list-ul')) {
+            // Удаляем старый мусор, который мог мешать
+            btn.removeAttribute('onclick'); 
+            btn.removeAttribute('onmousedown');
+            
+            // Намертво блокируем потерю фокуса при клике
+            btn.addEventListener('mousedown', function(e) { e.preventDefault(); });
+            
+            // Выполняем родную команду браузера
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.execCommand('insertUnorderedList', false, null);
+            });
+        }
+        
+        if (btn.innerHTML.includes('fa-list-ol')) {
+            btn.removeAttribute('onclick'); 
+            btn.removeAttribute('onmousedown');
+            
+            btn.addEventListener('mousedown', function(e) { e.preventDefault(); });
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.execCommand('insertOrderedList', false, null);
+            });
+        }
+    });
+});
+</script>
+
 {% endblock %}

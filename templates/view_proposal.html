@@ -49,6 +49,17 @@
         .block-text-content { flex: 1; }
         .block-text-img { width: 28%; flex-shrink: 0; display: flex; flex-direction: column; gap: 15px; } 
         .block-text-img img { width: 100%; aspect-ratio: 1 / 1; border-radius: 12px; object-fit: cover; border: 1px solid rgba(0,0,0,0.05); }
+        
+        /* НОВЫЕ СТИЛИ ДЛЯ РЕДАКТОРА */
+        .block-text-content ul { list-style-type: disc; padding-left: 20px; margin: 10px 0; }
+        .block-text-content ol { list-style-type: decimal; padding-left: 20px; margin: 10px 0; }
+        .block-text-content h2 { font-size: 22px; font-weight: 900; margin: 15px 0 10px 0; line-height: 1.2; }
+        .block-text-content h3 { font-size: 18px; font-weight: 700; margin: 15px 0 10px 0; }
+        .block-text-content a { color: #2563eb; text-decoration: underline; font-weight: bold; }
+        .block-text-content b, .block-text-content strong { font-weight: 900; }
+        .block-text-content i, .block-text-content em { font-style: italic; }
+        .block-text-content u { text-decoration: underline; }
+        .block-text-content s, .block-text-content strike { text-decoration: line-through; }
 
         /* PRODUCT BLOCK */
         .block-product { background: #fff; border-radius: 16px; padding: 30px; border: 1px solid #e5e7eb; margin-bottom: 20px; page-break-inside: avoid; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);}
@@ -71,6 +82,50 @@
         .footer { margin-top: 50px; font-size: 11px; color: #9ca3af; border-top: 1px solid #f3f4f6; padding-top: 25px; display: flex; justify-content: space-between; page-break-inside: avoid;}
         .footer strong { color: #4b5563; font-size: 12px;}
     </style>
+
+<!-- ИДЕАЛЬНАЯ ПЕЧАТЬ PDF -->
+<style>
+@media print {
+    /* Настраиваем саму страницу бумаги А4 и отступы от краев (чтобы не прилипало к верху/низу) */
+    @page {
+        size: A4;
+        margin: 15mm 0mm 15mm 0mm; /* Верх 15мм, Бока 0мм, Низ 15мм */
+    }
+    
+    /* Заставляем браузер печатать все фоны, цвета и градиенты */
+    body {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        background-color: white !important;
+    }
+
+    /* МАГИЯ: Запрещаем разрывать блоки на две страницы! 
+       Браузер будет переносить блок целиком на новую страницу, если он не влезает */
+    .block-cover, 
+    .cover-content,
+    .flex, 
+    .grid, 
+    .block-row,
+    .container > div,
+    main > div {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        /* Небольшой отступ между блоками при печати, чтобы они не слипались */
+        margin-bottom: 24px !important;
+    }
+
+    /* Если у блоков есть жесткая тень, которая обрезается при печати, делаем её мягче */
+    * {
+        box-shadow: none !important;
+    }
+
+    /* Скрываем кнопки печати/назад с самой бумаги (если они вдруг туда попадали) */
+    .no-print, button, .print-hidden {
+        display: none !important;
+    }
+}
+</style>
+
 </head>
 <body>
     <div class="no-print">
@@ -91,30 +146,91 @@
 
             {% for b in blocks %}
                 {% if b[0] == 'cover' %}
-                {% set s_cov = json.loads(b[9]) if b[9] and '{' in b[9] else {'angle': 10, 'gap': 5, 'grad': 70, 'color': '#ffffff', 'shadow': 'on', 'top_text': '2026 / ПРЕЗЕНТАЦИЯ'} %}
-                <div class="block-cover" style="gap: {{ s_cov.gap }}px;">
+                {% set s_cov = json.loads(b[9]) if b[9] and '{' in b[9] else {} %}
+                {% set angle = s_cov.get('angle', 10) %}
+                {% set gap = s_cov.get('gap', 5) %}
+                {% set grad = s_cov.get('grad', 70)|int %}
+                {% set color = s_cov.get('color', '#ffffff') %}
+                {% set shadow = s_cov.get('shadow', 80)|int %}
+                {% set shadow_style = s_cov.get('shadow_style', 'soft') %}
+                {% set top_text = s_cov.get('top_text', '') %}
+                {% set text_pos = s_cov.get('text_pos', 'bottom-left') %}
+                {% set grad_dir = s_cov.get('grad_dir', 'top') %}
+                {% set bw1 = s_cov.get('bw1', 'off') %}
+                {% set bw2 = s_cov.get('bw2', 'off') %}
+                {% set bw3 = s_cov.get('bw3', 'off') %}
+                {% set t_size = s_cov.get('title_size', 40) %}
+                {% set s_size = s_cov.get('sub_size', 16) %}
+                {% set c_height = s_cov.get('height', 50)|int %}
+                {% set c_height = 75 if c_height > 75 else c_height %}
+
+                <div class="block-cover" style="position: relative; display: flex; overflow: hidden; border-radius: 16px; margin-bottom: 24px; gap: {{ gap }}px; height: {{ c_height }}vh; min-height: 50px; background-color: #f9fafb;">
+
                     {% if b[6] and b[7] and b[8] %}
-                        <div style="flex:1; height:100%; background:url('/static/uploads/{{ b[6] }}') center/cover; clip-path: polygon(0 0, 100% 0, calc(100% - {{ s_cov.angle }}vw) 100%, 0 100%);"></div>
-                        <div style="flex:1; height:100%; background:url('/static/uploads/{{ b[7] }}') center/cover; clip-path: polygon({{ s_cov.angle }}vw 0, 100% 0, calc(100% - {{ s_cov.angle }}vw) 100%, 0 100%); margin-left: -{{ s_cov.angle }}vw;"></div>
-                        <div style="flex:1; height:100%; background:url('/static/uploads/{{ b[8] }}') center/cover; clip-path: polygon({{ s_cov.angle }}vw 0, 100% 0, 100% 100%, 0 100%); margin-left: -{{ s_cov.angle }}vw;"></div>
+                        <div style="flex:1; height:100%; background:url('/static/uploads/{{ b[6] }}') center/cover; clip-path: polygon(0 0, 100% 0, calc(100% - {{ angle }}vw) 100%, 0 100%); {% if bw1 == 'on' %}filter: grayscale(100%); -webkit-filter: grayscale(100%);{% endif %}"></div>
+                        <div style="flex:1; height:100%; background:url('/static/uploads/{{ b[7] }}') center/cover; clip-path: polygon({{ angle }}vw 0, 100% 0, calc(100% - {{ angle }}vw) 100%, 0 100%); margin-left: -{{ angle }}vw; {% if bw2 == 'on' %}filter: grayscale(100%); -webkit-filter: grayscale(100%);{% endif %}"></div>
+                        <div style="flex:1; height:100%; background:url('/static/uploads/{{ b[8] }}') center/cover; clip-path: polygon({{ angle }}vw 0, 100% 0, 100% 100%, 0 100%); margin-left: -{{ angle }}vw; {% if bw3 == 'on' %}filter: grayscale(100%); -webkit-filter: grayscale(100%);{% endif %}"></div>
                     {% elif b[6] and b[7] %}
-                        <div style="flex:1; height:100%; background:url('/static/uploads/{{ b[6] }}') center/cover; clip-path: polygon(0 0, 100% 0, calc(100% - {{ s_cov.angle }}vw) 100%, 0 100%);"></div>
-                        <div style="flex:1; height:100%; background:url('/static/uploads/{{ b[7] }}') center/cover; clip-path: polygon({{ s_cov.angle }}vw 0, 100% 0, 100% 100%, 0 100%); margin-left: -{{ s_cov.angle }}vw;"></div>
+                        <div style="flex:1; height:100%; background:url('/static/uploads/{{ b[6] }}') center/cover; clip-path: polygon(0 0, 100% 0, calc(100% - {{ angle }}vw) 100%, 0 100%); {% if bw1 == 'on' %}filter: grayscale(100%); -webkit-filter: grayscale(100%);{% endif %}"></div>
+                        <div style="flex:1; height:100%; background:url('/static/uploads/{{ b[7] }}') center/cover; clip-path: polygon({{ angle }}vw 0, 100% 0, 100% 100%, 0 100%); margin-left: -{{ angle }}vw; {% if bw2 == 'on' %}filter: grayscale(100%); -webkit-filter: grayscale(100%);{% endif %}"></div>
                     {% elif b[6] %}
-                        <div style="width:100%; height:100%; background:url('/static/uploads/{{ b[6] }}') center/cover;"></div>
+                        <div style="width:100%; height:100%; background:url('/static/uploads/{{ b[6] }}') center/cover; {% if bw1 == 'on' %}filter: grayscale(100%); -webkit-filter: grayscale(100%);{% endif %}"></div>
                     {% endif %}
-                    {% if s_cov.grad|int > 0 %}<div style="position: absolute; bottom:0; left:0; width:100%; height:80%; background: linear-gradient(to top, rgba(0,0,0,{{ s_cov.grad|int / 100 }}), transparent); pointer-events: none;"></div>{% endif %}
-                    <div class="cover-content" style="color: {{ s_cov.color }}; {% if s_cov.shadow == 'on' %}text-shadow: 0 2px 20px rgba(0,0,0,0.8);{% endif %}">
-                        <div class="cover-top-text font-mono">{{ s_cov.top_text }}</div>
-                        <h2 class="cover-title">{{ b[1] }}</h2>
-                        <p class="cover-subtitle">{{ b[2] if b[2] else '' }}</p>
+
+                    {% if grad > 0 %}
+                        {% if grad_dir == 'top' %}
+                            <div style="position: absolute; bottom:0; left:0; width:100%; height:100%; background: linear-gradient(to top, rgba(0,0,0,{{ grad / 100 }}) 0%, transparent 60%); pointer-events: none; z-index: 5;"></div>
+                        {% elif grad_dir == 'bottom' %}
+                            <div style="position: absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(to bottom, rgba(0,0,0,{{ grad / 100 }}) 0%, transparent 60%); pointer-events: none; z-index: 5;"></div>
+                        {% elif grad_dir == 'center' %}
+                            <div style="position: absolute; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle, rgba(0,0,0,{{ grad / 100 }}) 0%, transparent 70%); pointer-events: none; z-index: 5;"></div>
+                        {% endif %}
+                    {% endif %}
+
+                    {% set pos_styles = 'left: 40px; bottom: 40px; align-items: flex-start; text-align: left;' %}
+                    {% if text_pos == 'bottom-center' %}{% set pos_styles = 'left: 50%; bottom: 40px; transform: translateX(-50%); align-items: center; text-align: center;' %}{% endif %}
+                    {% if text_pos == 'bottom-right' %}{% set pos_styles = 'right: 40px; bottom: 40px; align-items: flex-end; text-align: right;' %}{% endif %}
+                    {% if text_pos == 'center' %}{% set pos_styles = 'left: 50%; top: 50%; transform: translate(-50%, -50%); align-items: center; text-align: center;' %}{% endif %}
+
+                    {% set op = shadow / 100 %}
+                    {% if shadow_style == 'hard' %}
+                        {% set text_shadow = 'text-shadow: 2px 2px 0px rgba(0,0,0,' ~ op ~ ');' if shadow > 0 else '' %}
+                    {% elif shadow_style == 'outline' %}
+                        {% set text_shadow = 'text-shadow: -1px -1px 0 rgba(0,0,0,' ~ op ~ '), 1px -1px 0 rgba(0,0,0,' ~ op ~ '), -1px 1px 0 rgba(0,0,0,' ~ op ~ '), 1px 1px 0 rgba(0,0,0,' ~ op ~ '), 2px 2px 5px rgba(0,0,0,' ~ op ~ ');' if shadow > 0 else '' %}
+                    {% else %}
+                        {% set text_shadow = 'text-shadow: 0 4px 20px rgba(0,0,0,' ~ op ~ ');' if shadow > 0 else '' %}
+                    {% endif %}
+
+                    <div class="cover-content" style="position: absolute; color: {{ color }}; {{ pos_styles }} z-index: 10; display:flex; flex-direction:column; width: 90%;">
+                        <div class="cover-top-text font-mono" style="{{ text_shadow }} margin-bottom: 4px; text-transform:uppercase; font-size: 14px; display: {{ 'none' if text_pos == 'center' and not top_text else 'block' }};">{{ top_text }}</div>
+                        <h2 class="cover-title" style="{{ text_shadow }} margin: 0; font-size: {{ t_size }}px; line-height:1; text-transform:uppercase;">{{ b[1] }}</h2>
+                        <p class="cover-subtitle" style="{{ text_shadow }} margin: 4px 0 0 0; font-size: {{ s_size }}px;">{{ b[2] if b[2] else '' }}</p>
                     </div>
                 </div>
-                
+                {% elif b[0] == 'before_after' %}
+            {% set s_ba = json.loads(b[9]) if b[9] and '{' in b[9] else {} %}
+            <div class="block-before-after" style="display: flex; gap: 20px; width: 100%; margin-bottom: 24px; break-inside: avoid;">
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                    {% if b[6] %}<img src="/static/uploads/{{ b[6] }}" style="width: 100%; height: 350px; object-fit: cover; border-radius: 12px; border: 1px solid #e5e7eb;">{% endif %}
+                    {% if s_ba.get('cap1') %}<div style="margin-top: 12px; font-size: 14px; font-weight: 600; color: #6b7280; text-align: center; font-style: italic;">{{ s_ba.get('cap1') }}</div>{% endif %}
+                </div>
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                    {% if b[7] %}<img src="/static/uploads/{{ b[7] }}" style="width: 100%; height: 350px; object-fit: cover; border-radius: 12px; border: 1px solid #e5e7eb;">{% endif %}
+                    {% if s_ba.get('cap2') %}<div style="margin-top: 12px; font-size: 14px; font-weight: 600; color: #6b7280; text-align: center; font-style: italic;">{{ s_ba.get('cap2') }}</div>{% endif %}
+                </div>
+            </div>
+
                 {% elif b[0] == 'text' %}
-                {% set s_txt = json.loads(b[9]) if b[9] and '{' in b[9] else {'bg': '#f9fafb', 'color': '#333333', 'bc': '#2563eb', 'bw': '4', 'b_style': 'left', 'b_rad': '0'} %}
-                {% set border_css = 'border: ' ~ s_txt.bw ~ 'px solid ' ~ s_txt.bc if s_txt.b_style == 'all' else 'border: ' ~ s_txt.bw ~ 'px double ' ~ s_txt.bc if s_txt.b_style == 'double' else 'border-right: ' ~ s_txt.bw ~ 'px solid ' ~ s_txt.bc if s_txt.b_style == 'right' else 'border-top: ' ~ s_txt.bw ~ 'px solid ' ~ s_txt.bc if s_txt.b_style == 'top' else 'border-bottom: ' ~ s_txt.bw ~ 'px solid ' ~ s_txt.bc if s_txt.b_style == 'bottom' else 'border-left: ' ~ s_txt.bw ~ 'px solid ' ~ s_txt.bc %}
-                <div class="block-text" style="background-color: {{ s_txt.bg }}; color: {{ s_txt.color }}; {{ border_css }}; border-radius: {{ s_txt.b_rad|default(0) }}px;">
+                {% set s_txt = json.loads(b[9]) if b[9] and '{' in b[9] else {} %}
+                {% set border_line = s_txt.get('b_line', 'solid') %}
+                {% set img_pos = s_txt.get('img_pos', 'right') %}
+                {% set bw = s_txt.get('bw', 4) %}
+                {% set bc = s_txt.get('bc', '#2563eb') %}
+                {% set b_style = s_txt.get('b_style', 'left') %}
+                
+                {% set border_css = 'border: ' ~ bw ~ 'px ' ~ border_line ~ ' ' ~ bc if b_style == 'all' else 'border-right: ' ~ bw ~ 'px ' ~ border_line ~ ' ' ~ bc if b_style == 'right' else 'border-top: ' ~ bw ~ 'px ' ~ border_line ~ ' ' ~ bc if b_style == 'top' else 'border-bottom: ' ~ bw ~ 'px ' ~ border_line ~ ' ' ~ bc if b_style == 'bottom' else 'border-left: ' ~ bw ~ 'px ' ~ border_line ~ ' ' ~ bc %}
+                
+                <div class="block-text" style="background-color: {{ s_txt.get('bg', '#f9fafb') }}; color: {{ s_txt.get('color', '#333333') }}; {{ border_css }}; border-radius: {{ s_txt.get('b_rad', 0) }}px; {% if img_pos == 'left' %}flex-direction: row-reverse;{% endif %}">
                     <div class="block-text-content">{{ b[2]|safe }}</div>
                     {% if (b[6] and b[6] != 'None') or (b[7] and b[7] != 'None') or (b[8] and b[8] != 'None') %}
                     <div class="block-text-img">
